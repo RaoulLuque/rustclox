@@ -1,8 +1,31 @@
+use std::{collections::HashMap, sync::LazyLock};
+
 use crate::scanner::token::{Token, TokenType};
 
 mod token;
 
 const NEWLINE_CHAR: char = '\n';
+
+const KEYWORDS: LazyLock<HashMap<&str, TokenType>> = LazyLock::new(|| {
+    let mut m = HashMap::new();
+    m.insert("and", TokenType::And);
+    m.insert("class", TokenType::Class);
+    m.insert("else", TokenType::Else);
+    m.insert("false", TokenType::False);
+    m.insert("for", TokenType::For);
+    m.insert("fun", TokenType::Fun);
+    m.insert("if", TokenType::If);
+    m.insert("nil", TokenType::Nil);
+    m.insert("or", TokenType::Or);
+    m.insert("print", TokenType::Print);
+    m.insert("return", TokenType::Return);
+    m.insert("super", TokenType::Super);
+    m.insert("this", TokenType::This);
+    m.insert("true", TokenType::True);
+    m.insert("var", TokenType::Var);
+    m.insert("while", TokenType::While);
+    m
+});
 
 pub struct Scanner<'a> {
     source: &'a str,
@@ -122,6 +145,9 @@ impl<'a> Scanner<'a> {
             // Digits
             '0'..='9' => self.scan_number(),
 
+            // Alphanumeric
+            'a'..='z' | 'A'..='Z' | '_' => self.scan_identifier(),
+
             // Whitespaces
             ' ' | '\r' | '\t' => {}
 
@@ -205,8 +231,26 @@ impl<'a> Scanner<'a> {
             .unwrap();
         self.add_token(TokenType::Number(*number_value));
     }
+
+    fn scan_identifier(&mut self) {
+        while self.peek().is_some_and(|c| is_alphanumeric(c)) {
+            self.advance();
+        }
+
+        let text = &self.source[self.start..self.current];
+        let token_type = if let Some(keyword) = KEYWORDS.get(text) {
+            *keyword
+        } else {
+            TokenType::Identifier(text)
+        };
+        self.add_token(token_type);
+    }
 }
 
 fn is_digit(character: char) -> bool {
     matches!(character, '0'..='9')
+}
+
+fn is_alphanumeric(character: char) -> bool {
+    matches!(character, 'a'..='z' | 'A'..='Z' | '_') || is_digit(character)
 }

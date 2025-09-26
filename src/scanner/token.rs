@@ -15,7 +15,7 @@ impl<'a> Token<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum TokenType<'a> {
     // Single-character tokens.
     LeftParenthesis,
