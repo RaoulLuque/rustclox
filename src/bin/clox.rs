@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use rustclox::Lox;
+use rustclox::{run_file, run_repl};
 
 /// A simple Lox interpreter and compiler written in Rust.
 #[derive(Parser)]
@@ -13,13 +13,9 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mut lox = Lox::new();
-
     if let Some(source) = args.source {
-        lox.run_file(&source);
-        return;
+        run_file(&source);
     } else {
-        lox.run_repl();
-        return;
+        run_repl();
     }
 }
