@@ -2,7 +2,7 @@
 pub struct Token<'a> {
     token_type: TokenType<'a>,
     line: usize,
-    column: usize,
+    start_index_in_source: usize,
 }
 
 impl<'a> Token<'a> {
@@ -10,7 +10,7 @@ impl<'a> Token<'a> {
         Token {
             token_type,
             line,
-            column,
+            start_index_in_source: column,
         }
     }
 }
