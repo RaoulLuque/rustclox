@@ -114,6 +114,14 @@ impl<'a> Scanner<'a> {
                 }
             }
 
+            // Strings
+            '"' => {
+                self.scan_string();
+            }
+
+            // Digits
+            '0'..='9' => self.scan_number(),
+
             // Whitespaces
             ' ' | '\r' | '\t' => {}
 
@@ -126,9 +134,8 @@ impl<'a> Scanner<'a> {
     }
 
     /// Adds a token of the given type to the vec of tokens.
-    fn add_token(&mut self, token_type: TokenType) {
-        let lexeme = &self.source[self.start..self.current];
-        let token = Token::new(token_type, lexeme, self.line);
+    fn add_token(&mut self, token_type: TokenType<'a>) {
+        let token = Token::new(token_type, self.line, self.start);
         self.tokens.push(token);
     }
 
@@ -141,10 +148,11 @@ impl<'a> Scanner<'a> {
 
     /// Peeks at the current character without consuming it.
     fn peek(&self) -> Option<char> {
-        if self.is_at_end() {
-            return None;
-        }
-        Some(self.source.chars().nth(self.current).unwrap())
+        self.source.chars().nth(self.current)
+    }
+
+    fn peek_next(&self) -> Option<char> {
+        self.source.chars().nth(self.current + 1)
     }
 
     /// Consumes the current character if it matches the expected character.
@@ -158,4 +166,47 @@ impl<'a> Scanner<'a> {
         }
         false
     }
+
+    fn scan_string(&mut self) {
+        while self.peek() != Some('"') && !self.is_at_end() {
+            if self.peek() == Some(NEWLINE_CHAR) {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            todo!("Handle error")
+        }
+
+        // The closing "
+        self.advance();
+
+        // Trim the surrounding "
+        let string_content = &self.source[(self.start + 1)..(self.current - 1)];
+        self.add_token(TokenType::Str(string_content));
+    }
+
+    fn scan_number(&mut self) {
+        while self.peek().is_some_and(|c| is_digit(c)) {
+            self.advance();
+        }
+
+        if self.peek() == Some('.') && self.peek_next().is_some_and(|c| is_digit(c)) {
+            // Consume the '.'
+            self.advance();
+            while self.peek().is_some_and(|c| is_digit(c)) {
+                self.advance();
+            }
+        }
+
+        let number_value = &self.source[self.start..self.current]
+            .parse::<f32>()
+            .unwrap();
+        self.add_token(TokenType::Number(*number_value));
+    }
+}
+
+fn is_digit(character: char) -> bool {
+    matches!(character, '0'..='9')
 }

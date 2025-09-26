@@ -24,7 +24,7 @@ pub fn run_repl() -> std::io::Result<()> {
 }
 
 pub fn run(source: &str) {
-    let mut scanner = Scanner::new(source);
+    let scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens();
 
     for token in tokens {

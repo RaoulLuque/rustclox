@@ -1,22 +1,22 @@
 #[derive(Debug)]
 pub struct Token<'a> {
-    token_type: TokenType,
-    lexeme: &'a str,
+    token_type: TokenType<'a>,
     line: usize,
+    column: usize,
 }
 
 impl<'a> Token<'a> {
-    pub fn new(token_type: TokenType, lexeme: &'a str, line: usize) -> Self {
+    pub fn new(token_type: TokenType<'a>, line: usize, column: usize) -> Self {
         Token {
             token_type,
-            lexeme,
             line,
+            column,
         }
     }
 }
 
 #[derive(Debug)]
-pub enum TokenType {
+pub enum TokenType<'a> {
     // Single-character tokens.
     LeftParenthesis,
     RightParenthesis,
@@ -41,9 +41,9 @@ pub enum TokenType {
     LessEqual,
 
     // Literals.
-    Identifier,
-    Str,
-    Number,
+    Identifier(&'a str),
+    Str(&'a str),
+    Number(f32),
 
     // Keywords.
     And,
