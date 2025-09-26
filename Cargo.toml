@@ -2,7 +2,7 @@
 name = "rustclox"
 version = "0.1.0"
 edition = "2024"
-description = "A [Rust] implementation of a [c]ompiler and interpreter for the [Lox] programming language."
+description = "A [Rust] implementation of an interpreter (and [c]ompiler) for the [Lox] programming language."
 readme = "README.md"
 repository = "https://github.com/raoulluque/rustclox"
 license = "MIT OR Apache-2.0"
@@ -11,3 +11,4 @@ categories = ["parser-implementations", "command-line-utilities"]
 default-run = "clox"
 
 [dependencies]
+clap = {version = "4.5", features = ["derive"]}
