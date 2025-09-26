@@ -14,8 +14,10 @@ fn main() {
     let args = Args::parse();
 
     if let Some(source) = args.source {
-        run_file(&source);
+        println!("Running File: {:?}", source);
+        run_file(&source).unwrap();
     } else {
+        println!("Running in REPL mode");
         run_repl();
     }
 }
