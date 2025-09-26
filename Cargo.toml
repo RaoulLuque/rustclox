@@ -5,5 +5,9 @@ edition = "2024"
 description = "A [Rust] implementation of a [c]ompiler and interpreter for the [Lox] programming language."
 readme = "README.md"
 repository = "https://github.com/raoulluque/rustclox"
+license = "MIT OR Apache-2.0"
+keywords = ["interpreter", "lox", "compiler", "embeddable", "script"]
+categories = ["parser-implementations", "command-line-utilities"]
+default-run = "clox"
 
 [dependencies]
