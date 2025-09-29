@@ -1,5 +1,6 @@
 use crate::ast::{ASTVisitor, Expression};
 
+/// ASTPrinter is a visitor that converts an AST into a parenthesized, Lisp-like string representation.
 struct ASTPrinter {}
 
 impl ASTPrinter {
