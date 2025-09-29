@@ -5,7 +5,8 @@ use std::{
 
 use crate::scanner::Scanner;
 
-mod scanner;
+mod ast;
+pub mod scanner;
 
 pub fn run_file(path: &std::path::Path) -> std::io::Result<()> {
     let source = fs::read_to_string(path)?;

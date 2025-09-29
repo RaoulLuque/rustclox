@@ -1,8 +1,8 @@
 use std::{collections::HashMap, sync::LazyLock};
 
-use crate::scanner::token::{Token, TokenType};
+use crate::scanner::token::{Literal, Operator, Token, TokenType};
 
-mod token;
+pub mod token;
 
 const NEWLINE_CHAR: char = '\n';
 
@@ -11,17 +11,17 @@ const KEYWORDS: LazyLock<HashMap<&str, TokenType>> = LazyLock::new(|| {
     m.insert("and", TokenType::And);
     m.insert("class", TokenType::Class);
     m.insert("else", TokenType::Else);
-    m.insert("false", TokenType::False);
+    m.insert("false", TokenType::Literal(Literal::False));
     m.insert("for", TokenType::For);
     m.insert("fun", TokenType::Fun);
     m.insert("if", TokenType::If);
-    m.insert("nil", TokenType::Nil);
+    m.insert("nil", TokenType::Literal(Literal::Nil));
     m.insert("or", TokenType::Or);
     m.insert("print", TokenType::Print);
     m.insert("return", TokenType::Return);
     m.insert("super", TokenType::Super);
     m.insert("this", TokenType::This);
-    m.insert("true", TokenType::True);
+    m.insert("true", TokenType::Literal(Literal::True));
     m.insert("var", TokenType::Var);
     m.insert("while", TokenType::While);
     m
@@ -32,7 +32,7 @@ pub struct Scanner<'a> {
     line: usize,
     start: usize,
     current: usize,
-    tokens: Vec<Token<'a>>,
+    tokens: Vec<Token<TokenType<'a>>>,
 }
 
 impl<'a> Scanner<'a> {
@@ -46,7 +46,7 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    pub fn scan_tokens(mut self) -> Vec<Token<'a>> {
+    pub fn scan_tokens(mut self) -> Vec<Token<TokenType<'a>>> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
@@ -96,7 +96,7 @@ impl<'a> Scanner<'a> {
             // Possible single character or double character tokens
             '!' => {
                 let token_type = if self.match_current('=') {
-                    TokenType::BangEqual
+                    TokenType::Operator(Operator::BangEqual)
                 } else {
                     TokenType::Bang
                 };
@@ -104,25 +104,25 @@ impl<'a> Scanner<'a> {
             }
             '=' => {
                 let token_type = if self.match_current('=') {
-                    TokenType::EqualEqual
+                    TokenType::Operator(Operator::EqualEqual)
                 } else {
-                    TokenType::Equal
+                    TokenType::Operator(Operator::Equal)
                 };
                 self.add_token(token_type);
             }
             '<' => {
                 let token_type = if self.match_current('=') {
-                    TokenType::LessEqual
+                    TokenType::Operator(Operator::LessEqual)
                 } else {
-                    TokenType::Less
+                    TokenType::Operator(Operator::Less)
                 };
                 self.add_token(token_type);
             }
             '>' => {
                 let token_type = if self.match_current('=') {
-                    TokenType::GreaterEqual
+                    TokenType::Operator(Operator::GreaterEqual)
                 } else {
-                    TokenType::Greater
+                    TokenType::Operator(Operator::Greater)
                 };
                 self.add_token(token_type);
             }
@@ -210,7 +210,7 @@ impl<'a> Scanner<'a> {
 
         // Trim the surrounding "
         let string_content = &self.source[(self.start + 1)..(self.current - 1)];
-        self.add_token(TokenType::Str(string_content));
+        self.add_token(TokenType::Literal(Literal::Str(string_content)));
     }
 
     fn scan_number(&mut self) {
@@ -229,7 +229,7 @@ impl<'a> Scanner<'a> {
         let number_value = &self.source[self.start..self.current]
             .parse::<f32>()
             .unwrap();
-        self.add_token(TokenType::Number(*number_value));
+        self.add_token(TokenType::Literal(Literal::Number(*number_value)));
     }
 
     fn scan_identifier(&mut self) {

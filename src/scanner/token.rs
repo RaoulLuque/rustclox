@@ -1,12 +1,12 @@
 #[derive(Debug)]
-pub struct Token<'a> {
-    token_type: TokenType<'a>,
-    line: usize,
-    start_index_in_source: usize,
+pub struct Token<T> {
+    pub token_type: T,
+    pub line: usize,
+    pub start_index_in_source: usize,
 }
 
-impl<'a> Token<'a> {
-    pub fn new(token_type: TokenType<'a>, line: usize, column: usize) -> Self {
+impl<T> Token<T> {
+    pub fn new(token_type: T, line: usize, column: usize) -> Self {
         Token {
             token_type,
             line,
@@ -31,37 +31,62 @@ pub enum TokenType<'a> {
     Star,
 
     // One or two character tokens.
-    Bang,
-    BangEqual,
-    Equal,
-    EqualEqual,
-    Greater,
-    GreaterEqual,
-    Less,
-    LessEqual,
 
     // Literals.
+    Literal(Literal<'a>),
+
+    // Operators
     Identifier(&'a str),
-    Str(&'a str),
-    Number(f32),
+    Operator(Operator),
+    Bang,
 
     // Keywords.
     And,
     Class,
     Else,
-    False,
     Fun,
     For,
     If,
-    Nil,
     Or,
     Print,
     Return,
     Super,
     This,
-    True,
     Var,
     While,
 
     Eof,
 }
+
+#[derive(Debug, Clone, Copy)]
+pub enum Literal<'a> {
+    Number(f32),
+    Str(&'a str),
+    True,
+    False,
+    Nil,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Operator {
+    EqualEqual,
+    BangEqual,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
+    Plus,
+    Equal,
+    Minus,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UnaryOperator {
+    Minus(Minus),
+    Bang(Bang),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Bang {}
+#[derive(Debug, Clone, Copy)]
+pub struct Minus {}
