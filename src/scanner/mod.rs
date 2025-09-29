@@ -90,7 +90,7 @@ impl<'a> Scanner<'a> {
                 self.add_token(TokenType::Semicolon);
             }
             '*' => {
-                self.add_token(TokenType::Star);
+                self.add_token(TokenType::Operator(Operator::Star));
             }
 
             // Possible single character or double character tokens
@@ -133,7 +133,7 @@ impl<'a> Scanner<'a> {
                         self.advance();
                     }
                 } else {
-                    self.add_token(TokenType::Slash);
+                    self.add_token(TokenType::Operator(Operator::Slash));
                 }
             }
 

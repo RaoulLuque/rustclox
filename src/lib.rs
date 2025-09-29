@@ -5,7 +5,8 @@ use std::{
 
 use crate::scanner::Scanner;
 
-mod ast;
+pub mod ast;
+pub mod parser;
 pub mod scanner;
 
 pub fn run_file(path: &std::path::Path) -> std::io::Result<()> {

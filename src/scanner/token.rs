@@ -1,11 +1,11 @@
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Token<T> {
     pub token_type: T,
     pub line: usize,
     pub start_index_in_source: usize,
 }
 
-impl<T> Token<T> {
+impl<T: Copy> Token<T> {
     pub fn new(token_type: T, line: usize, column: usize) -> Self {
         Token {
             token_type,
@@ -15,7 +15,20 @@ impl<T> Token<T> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+impl<'a> Token<TokenType<'a>> {
+    pub fn to_token_sub_type<U: TokenSubType<'a, U>>(self, _: &U) -> Option<Token<U>> {
+        if let Some(new_token_type) = U::from_token_type(&self.token_type) {
+            return Some(Token {
+                token_type: new_token_type,
+                line: self.line,
+                start_index_in_source: self.start_index_in_source,
+            });
+        }
+        None
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType<'a> {
     // Single-character tokens.
     LeftParenthesis,
@@ -27,8 +40,6 @@ pub enum TokenType<'a> {
     Minus,
     Plus,
     Semicolon,
-    Slash,
-    Star,
 
     // One or two character tokens.
 
@@ -58,7 +69,12 @@ pub enum TokenType<'a> {
     Eof,
 }
 
-#[derive(Debug, Clone, Copy)]
+pub trait TokenSubType<'a, T>: Copy {
+    fn from_token_type(token_type: &TokenType<'a>) -> Option<T>;
+    fn to_token_type(token_sub_type: T) -> TokenType<'a>;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Literal<'a> {
     Number(f32),
     Str(&'a str),
@@ -67,7 +83,21 @@ pub enum Literal<'a> {
     Nil,
 }
 
-#[derive(Debug, Clone, Copy)]
+impl<'a> TokenSubType<'a, Literal<'a>> for Literal<'a> {
+    fn from_token_type(token_type: &TokenType<'a>) -> Option<Literal<'a>> {
+        if let TokenType::Literal(literal) = token_type {
+            Some(*literal)
+        } else {
+            None
+        }
+    }
+
+    fn to_token_type(token_sub_type: Literal<'a>) -> TokenType<'a> {
+        TokenType::Literal(token_sub_type)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Operator {
     EqualEqual,
     BangEqual,
@@ -78,15 +108,48 @@ pub enum Operator {
     Plus,
     Equal,
     Minus,
+    Star,
+    Slash,
 }
 
-#[derive(Debug, Clone, Copy)]
+impl<'a> TokenSubType<'a, Operator> for Operator {
+    fn from_token_type(token_type: &TokenType<'a>) -> Option<Operator> {
+        if let TokenType::Operator(operator) = token_type {
+            Some(*operator)
+        } else {
+            None
+        }
+    }
+
+    fn to_token_type(token_sub_type: Operator) -> TokenType<'a> {
+        TokenType::Operator(token_sub_type)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum UnaryOperator {
     Minus(Minus),
     Bang(Bang),
 }
 
-#[derive(Debug, Clone, Copy)]
+impl<'a> TokenSubType<'a, UnaryOperator> for UnaryOperator {
+    fn from_token_type(token_type: &TokenType<'a>) -> Option<UnaryOperator> {
+        match token_type {
+            TokenType::Operator(Operator::Minus) => Some(UnaryOperator::Minus(Minus {})),
+            TokenType::Bang => Some(UnaryOperator::Bang(Bang {})),
+            _ => None,
+        }
+    }
+
+    fn to_token_type(token_sub_type: UnaryOperator) -> TokenType<'a> {
+        match token_sub_type {
+            UnaryOperator::Minus(_) => TokenType::Operator(Operator::Minus),
+            UnaryOperator::Bang(_) => TokenType::Bang,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Bang {}
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Minus {}
