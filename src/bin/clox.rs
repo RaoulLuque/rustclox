@@ -18,6 +18,6 @@ fn main() {
         run_file(&source).unwrap();
     } else {
         println!("Running in REPL mode");
-        run_repl();
+        run_repl().unwrap();
     }
 }
