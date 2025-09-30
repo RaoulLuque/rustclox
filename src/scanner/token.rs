@@ -69,8 +69,29 @@ pub enum TokenType<'a> {
     Eof,
 }
 
+impl TokenType<'_> {
+    /// Returns true if the two token types are of the same variant, ignoring any associated data.
+    pub fn is_same_type(&self, other: &TokenType) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
+}
+
+impl<'a> TokenSubType<'a, TokenType<'a>> for TokenType<'a> {
+    fn from_token_type(token_type: &TokenType<'a>) -> Option<TokenType<'a>> {
+        Some(*token_type)
+    }
+
+    fn to_token_type(token_sub_type: TokenType<'a>) -> TokenType<'a> {
+        token_sub_type
+    }
+}
+
+/// A trait for converting between [TokenType] and its subtypes.
 pub trait TokenSubType<'a, T>: Copy {
+    /// Converts a [TokenType] to the subtype T, if possible.
     fn from_token_type(token_type: &TokenType<'a>) -> Option<T>;
+
+    /// Converts the subtype T to a [TokenType].
     fn to_token_type(token_sub_type: T) -> TokenType<'a>;
 }
 

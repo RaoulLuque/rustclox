@@ -1,0 +1,294 @@
+use std::{error::Error, fmt::Display};
+
+use crate::{
+    ast::{Expression, Token},
+    scanner::token::{Bang, Literal, Minus, Operator, TokenSubType, TokenType, UnaryOperator},
+};
+
+#[derive(Debug)]
+enum ParserError<'a> {
+    UnexpectedToken {
+        expected: Vec<TokenType<'a>>,
+        found: Token<TokenType<'a>>,
+    },
+}
+
+impl Display for ParserError<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParserError::UnexpectedToken { expected, found } => {
+                write!(
+                    f,
+                    "ParserError: Expected token {:?}, but found {:?}",
+                    expected, found
+                )
+            }
+        }
+    }
+}
+
+impl Error for ParserError<'_> {}
+
+struct Parser<'a> {
+    tokens: Vec<Token<TokenType<'a>>>,
+    current: usize,
+}
+
+impl<'a> Parser<'a> {
+    pub fn new(tokens: Vec<Token<TokenType<'a>>>) -> Self {
+        Parser { tokens, current: 0 }
+    }
+
+    pub fn parse(&mut self) -> Expression<'a> {
+        // TODO: Properly handle error here
+        self.expression().unwrap()
+    }
+
+    /// Parses an expression and returns the resulting AST node.
+    ///
+    /// The BNF rule is:
+    /// expression     → equality ;
+    fn expression(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        self.equality()
+    }
+
+    /// Parses an equality expression.
+    ///
+    /// The BNF rule is:
+    /// equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+    ///
+    /// Returns a ParserError if the current token is not a valid equality expression.
+    fn equality(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        let mut expr = self.comparison()?;
+
+        while let Some(operator) = self.match_token(&[Operator::BangEqual, Operator::EqualEqual]) {
+            let right = self.comparison()?;
+            expr = Expression::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    /// Parses a comparison expression.
+    ///
+    /// The BNF rule is:
+    /// comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+    ///
+    /// Returns a ParserError if the current token is not a valid comparison expression.
+    fn comparison(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        let mut expr = self.term()?;
+
+        while let Some(operator) = self.match_token(&[
+            Operator::Greater,
+            Operator::GreaterEqual,
+            Operator::Less,
+            Operator::LessEqual,
+        ]) {
+            let right = self.term()?;
+            expr = Expression::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    /// Parses a term expression.
+    ///
+    /// The BNF rule is:
+    /// term           → factor ( ( "-" | "+" ) factor )* ;
+    ///
+    /// Returns a ParserError if the current token is not a valid term expression.
+    fn term(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        let mut expr = self.factor()?;
+
+        while let Some(operator) = self.match_token(&[Operator::Minus, Operator::Plus]) {
+            let right = self.factor()?;
+            expr = Expression::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    /// Parses a factor expression.
+    ///
+    /// The BNF rule is:
+    /// factor         → unary ( ( "/" | "*" ) unary )* ;
+    ///
+    /// Returns a ParserError if the current token is not a valid factor expression.
+    fn factor(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        let mut expr = self.unary()?;
+
+        while let Some(operator) = self.match_token(&[Operator::Star, Operator::Slash]) {
+            let right = self.unary()?;
+            expr = Expression::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    /// Parses a unary expression.
+    ///
+    /// The BNF rule is:
+    /// unary          → ( "!" | "-" ) unary
+    ///                | primary ;
+    ///
+    /// Returns a ParserError if the current token is not a valid unary expression.
+    fn unary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        if let Some(operator) =
+            self.match_token(&[UnaryOperator::Minus(Minus {}), UnaryOperator::Bang(Bang {})])
+        {
+            let right = self.unary()?;
+            Ok(Expression::Unary {
+                operator,
+                right: Box::new(right),
+            })
+        } else {
+            self.primary()
+        }
+    }
+
+    /// Parses a primary expression.
+    ///
+    /// The BNF rule is:
+    /// primary        → "true" | "false" | "nil"
+    ///               | NUMBER | STRING
+    ///              | "(" expression ")" ;
+    ///
+    /// Returns a ParserError if the current token is not a valid primary expression.
+    fn primary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        if let Some(literal_token) =
+            self.match_token(&[Literal::False, Literal::True, Literal::Nil])
+        {
+            return Ok(Expression::Literal(literal_token.token_type));
+        }
+
+        if let Some(number_token) = self.match_token(&[Literal::Number(0.0)]) {
+            return Ok(Expression::Literal(number_token.token_type));
+        }
+
+        if let Some(string_token) = self.match_token(&[Literal::Str("")]) {
+            return Ok(Expression::Literal(string_token.token_type));
+        }
+
+        if self.match_token(&[TokenType::LeftParenthesis]).is_some() {
+            let expr = self.expression()?;
+            self.consume(TokenType::RightParenthesis)?;
+            return Ok(Expression::Grouping(Box::new(expr)));
+        }
+
+        Err(ParserError::UnexpectedToken {
+            expected: vec![
+                TokenType::Literal(Literal::False),
+                TokenType::Literal(Literal::True),
+                TokenType::Literal(Literal::Nil),
+                TokenType::Literal(Literal::Number(0.0)),
+                TokenType::Literal(Literal::Str("")),
+                TokenType::LeftParenthesis,
+            ],
+            found: *self.peek(),
+        })
+    }
+
+    /// Checks if the current token matches any of the given types. If so, consumes the current token and returns true.
+    /// Otherwise, returns false.
+    fn match_token<T: TokenSubType<'a, T>>(&mut self, types: &[T]) -> Option<Token<T>> {
+        for token_type in types {
+            if self.check(token_type) {
+                // This branch always returns Some because we just checked that the token is of the given type.
+                return self.advance().to_token_sub_type(token_type);
+            }
+        }
+        None
+    }
+
+    /// Checks if the current token is of the given type.
+    fn check<T: TokenSubType<'a, T>>(&self, token_type: &T) -> bool {
+        if self.is_at_end() {
+            return false;
+        }
+        self.peek()
+            .token_type
+            .is_same_type(&T::to_token_type(*token_type))
+    }
+
+    /// Consumes the current token and returns it.
+    fn advance(&mut self) -> Token<TokenType<'a>> {
+        if !self.is_at_end() {
+            self.current += 1;
+        }
+        self.previous()
+    }
+
+    /// Returns true if the current token is the end of file token.
+    fn is_at_end(&self) -> bool {
+        self.peek().token_type == TokenType::Eof
+    }
+
+    /// Returns the current token without consuming it.
+    fn peek(&self) -> &Token<TokenType<'a>> {
+        &self.tokens[self.current]
+    }
+
+    /// Returns the previous token.
+    fn previous(&self) -> Token<TokenType<'a>> {
+        self.tokens[self.current - 1]
+    }
+
+    /// Consumes the current token if it matches the expected type. Otherwise, returns a ParserError.
+    /// This is used for tokens that must be present, such as closing parentheses.
+    fn consume(
+        &mut self,
+        expected: TokenType<'a>,
+    ) -> Result<Token<TokenType<'a>>, ParserError<'a>> {
+        if self.check(&expected) {
+            Ok(self.advance())
+        } else {
+            Err(ParserError::UnexpectedToken {
+                expected: vec![expected],
+                found: *self.peek(),
+            })
+        }
+    }
+
+    /// Synchronizes the parser after an error. This is done by discarding tokens until we reach a (heuristically determined) statement boundary.
+    /// That is, we consider a semicolon or keywords (such as `class`, `fun`, `var`, `for`, `if`, `while`, `print`, `return`) as a statement boundary.
+    /// This is a heuristic, because we could hit a semicolon separating clauses in a for loop for example.
+    fn synchronize(&mut self) {
+        self.advance();
+
+        while !self.is_at_end() {
+            if self.previous().token_type == TokenType::Semicolon {
+                return;
+            }
+
+            match self.peek().token_type {
+                TokenType::Class
+                | TokenType::Fun
+                | TokenType::Var
+                | TokenType::For
+                | TokenType::If
+                | TokenType::While
+                | TokenType::Print
+                | TokenType::Return => return,
+                _ => {}
+            }
+
+            self.advance();
+        }
+    }
+}
