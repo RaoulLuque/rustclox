@@ -29,7 +29,7 @@ impl Display for ParserError<'_> {
 
 impl Error for ParserError<'_> {}
 
-struct Parser<'a> {
+pub struct Parser<'a> {
     tokens: Vec<Token<TokenType<'a>>>,
     current: usize,
 }

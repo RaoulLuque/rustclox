@@ -28,8 +28,10 @@ pub fn run_repl() -> std::io::Result<()> {
 pub fn run(source: &str) {
     let scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens();
+    let mut parser = parser::Parser::new(tokens);
+    let expression = parser.parse();
 
-    for token in tokens {
-        println!("{:?}", token);
-    }
+    let ast_printer = ast::ast_printer::ASTPrinter::new();
+
+    println!("{}", ast_printer.print(&expression));
 }

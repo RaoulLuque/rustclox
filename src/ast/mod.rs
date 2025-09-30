@@ -1,7 +1,7 @@
 pub use crate::scanner::token::Token;
 use crate::scanner::token::{Literal, Operator, UnaryOperator};
 
-mod ast_printer;
+pub mod ast_printer;
 
 pub enum Expression<'a> {
     Literal(Literal<'a>),
