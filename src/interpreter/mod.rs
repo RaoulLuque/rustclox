@@ -6,7 +6,7 @@ use crate::{
 };
 
 #[derive(PartialEq)]
-enum LoxObject {
+pub enum LoxObject {
     Number(f32),
     Str(String),
     Boolean(bool),
@@ -14,7 +14,7 @@ enum LoxObject {
 }
 
 #[derive(Debug)]
-enum RuntimeError<'a> {
+pub enum RuntimeError<'a> {
     TypeError(String, Token<TokenType<'a>>),
 }
 
@@ -35,7 +35,7 @@ impl Display for RuntimeError<'_> {
 
 impl Error for RuntimeError<'_> {}
 
-struct Interpreter {}
+pub struct Interpreter {}
 
 impl Interpreter {
     /// Creates a new Interpreter instance.

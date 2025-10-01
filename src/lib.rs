@@ -3,7 +3,7 @@ use std::{
     io::{self, Write},
 };
 
-use crate::scanner::Scanner;
+use crate::{interpreter::Interpreter, scanner::Scanner};
 
 pub mod ast;
 pub mod interpreter;
@@ -32,7 +32,7 @@ pub fn run(source: &str) {
     let mut parser = parser::Parser::new(tokens);
     let expression = parser.parse();
 
-    let ast_printer = ast::ast_printer::ASTPrinter::new();
+    let interpreter = Interpreter::new();
 
-    println!("{}", ast_printer.print(&expression));
+    interpreter.interpret(&expression);
 }
