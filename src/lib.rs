@@ -3,9 +3,10 @@ use std::{
     io::{self, Write},
 };
 
-use crate::{interpreter::Interpreter, scanner::Scanner};
+use crate::{error::CloxError, interpreter::Interpreter, scanner::Scanner};
 
 pub mod ast;
+pub mod error;
 pub mod interpreter;
 pub mod parser;
 pub mod scanner;
@@ -28,7 +29,16 @@ pub fn run_repl() -> std::io::Result<()> {
 
 pub fn run(source: &str) {
     let scanner = Scanner::new(source);
-    let tokens = scanner.scan_tokens();
+    let tokens = match scanner.scan_tokens() {
+        Ok(tokens) => tokens,
+        Err(errors) => {
+            for error in errors {
+                CloxError::ScannerError(error).report_error(source);
+            }
+            return;
+        }
+    };
+    println!("{:#?}", tokens);
     let mut parser = parser::Parser::new(tokens);
     let expression = parser.parse();
 

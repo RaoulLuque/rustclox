@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::LazyLock};
+use std::{collections::HashMap, error::Error, fmt::Display, sync::LazyLock};
 
 use crate::scanner::token::{Literal, Operator, Token, TokenType};
 
@@ -28,13 +28,43 @@ const KEYWORDS: LazyLock<HashMap<&str, TokenType>> = LazyLock::new(|| {
     m
 });
 
+/// The Scanner is responsible for converting the source code into a series of tokens.
 pub struct Scanner<'a> {
+    /// The source code to scan.
     source: &'a str,
+    /// The current line number in the source code.
     line: usize,
+    /// The start index of the current lexeme being scanned.
     start: usize,
+    /// The current index in the source code.
     current: usize,
+    /// The list of tokens that have been scanned.
     tokens: Vec<Token<TokenType<'a>>>,
+    /// Any errors encountered during scanning.
+    errors: Vec<ScannerError>,
 }
+
+#[derive(Debug)]
+pub enum ScannerError {
+    /// An unknown character was encountered during scanning. Includes the character, line number, and current number.
+    UnknownToken(char, usize, usize),
+}
+
+impl Display for ScannerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ScannerError::UnknownToken(character, line, current) => {
+                write!(
+                    f,
+                    "[line {}] ScannerError at position {}: Unknown character '{}'",
+                    line, current, character
+                )
+            }
+        }
+    }
+}
+
+impl Error for ScannerError {}
 
 impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Self {
@@ -44,15 +74,20 @@ impl<'a> Scanner<'a> {
             start: 0,
             current: 0,
             tokens: Vec::new(),
+            errors: Vec::new(),
         }
     }
 
-    pub fn scan_tokens(mut self) -> Vec<Token<TokenType<'a>>> {
+    pub fn scan_tokens(mut self) -> Result<Vec<Token<TokenType<'a>>>, Vec<ScannerError>> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
         }
-        self.tokens
+        if self.errors.is_empty() {
+            Ok(self.tokens)
+        } else {
+            Err(self.errors)
+        }
     }
 
     fn is_at_end(&self) -> bool {
@@ -154,8 +189,11 @@ impl<'a> Scanner<'a> {
 
             NEWLINE_CHAR => self.line += 1,
             _ => {
-                println!("Unexpected character: {}", character);
-                todo!("Implement error handling");
+                self.errors.push(ScannerError::UnknownToken(
+                    character,
+                    self.line,
+                    self.current,
+                ));
             }
         }
     }
