@@ -1,3 +1,5 @@
+use std::error::Error;
+
 pub use crate::scanner::token::Token;
 use crate::scanner::token::{Literal, Operator, UnaryOperator};
 
@@ -18,7 +20,7 @@ pub enum Expression<'a> {
 }
 
 impl<'a> Expression<'a> {
-    pub fn accept<T, V: ASTVisitor<T>>(&self, visitor: &V) -> T {
+    pub fn accept<V: ASTVisitor<'a>>(&self, visitor: &V) -> Result<V::Output, V::ErrorType> {
         match self {
             Expression::Literal(_) => visitor.visit_literal(self),
             Expression::Grouping(_) => visitor.visit_grouping(self),
@@ -28,9 +30,12 @@ impl<'a> Expression<'a> {
     }
 }
 
-pub trait ASTVisitor<T> {
-    fn visit_literal(&self, expr: &Expression) -> T;
-    fn visit_grouping(&self, expr: &Expression) -> T;
-    fn visit_unary(&self, expr: &Expression) -> T;
-    fn visit_binary(&self, expr: &Expression) -> T;
+pub trait ASTVisitor<'a> {
+    type Output;
+    type ErrorType: Error;
+
+    fn visit_literal(&self, expr: &Expression<'a>) -> Result<Self::Output, Self::ErrorType>;
+    fn visit_grouping(&self, expr: &Expression<'a>) -> Result<Self::Output, Self::ErrorType>;
+    fn visit_unary(&self, expr: &Expression<'a>) -> Result<Self::Output, Self::ErrorType>;
+    fn visit_binary(&self, expr: &Expression<'a>) -> Result<Self::Output, Self::ErrorType>;
 }

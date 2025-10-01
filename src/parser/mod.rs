@@ -13,6 +13,7 @@ enum ParserError<'a> {
     },
 }
 
+// TODO: Pretty print the error message
 impl Display for ParserError<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

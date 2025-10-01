@@ -81,10 +81,10 @@ impl<'a> Scanner<'a> {
                 self.add_token(TokenType::Dot);
             }
             '-' => {
-                self.add_token(TokenType::Minus);
+                self.add_token(TokenType::Operator(Operator::Minus));
             }
             '+' => {
-                self.add_token(TokenType::Plus);
+                self.add_token(TokenType::Operator(Operator::Plus));
             }
             ';' => {
                 self.add_token(TokenType::Semicolon);
@@ -106,7 +106,7 @@ impl<'a> Scanner<'a> {
                 let token_type = if self.match_current('=') {
                     TokenType::Operator(Operator::EqualEqual)
                 } else {
-                    TokenType::Operator(Operator::Equal)
+                    TokenType::Equal
                 };
                 self.add_token(token_type);
             }

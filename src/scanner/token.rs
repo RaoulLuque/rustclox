@@ -37,9 +37,8 @@ pub enum TokenType<'a> {
     RightBrace,
     Comma,
     Dot,
-    Minus,
-    Plus,
     Semicolon,
+    Equal,
 
     // One or two character tokens.
 
@@ -118,6 +117,16 @@ impl<'a> TokenSubType<'a, Literal<'a>> for Literal<'a> {
     }
 }
 
+impl<'a> From<Token<Literal<'a>>> for Token<TokenType<'a>> {
+    fn from(token: Token<Literal<'a>>) -> Self {
+        Token {
+            token_type: TokenType::Literal(token.token_type),
+            line: token.line,
+            start_index_in_source: token.start_index_in_source,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Operator {
     EqualEqual,
@@ -127,7 +136,6 @@ pub enum Operator {
     Greater,
     GreaterEqual,
     Plus,
-    Equal,
     Minus,
     Star,
     Slash,
@@ -144,6 +152,16 @@ impl<'a> TokenSubType<'a, Operator> for Operator {
 
     fn to_token_type(token_sub_type: Operator) -> TokenType<'a> {
         TokenType::Operator(token_sub_type)
+    }
+}
+
+impl<'a> From<Token<Operator>> for Token<TokenType<'a>> {
+    fn from(token: Token<Operator>) -> Self {
+        Token {
+            token_type: TokenType::Operator(token.token_type),
+            line: token.line,
+            start_index_in_source: token.start_index_in_source,
+        }
     }
 }
 
@@ -166,6 +184,16 @@ impl<'a> TokenSubType<'a, UnaryOperator> for UnaryOperator {
         match token_sub_type {
             UnaryOperator::Minus(_) => TokenType::Operator(Operator::Minus),
             UnaryOperator::Bang(_) => TokenType::Bang,
+        }
+    }
+}
+
+impl<'a> From<Token<UnaryOperator>> for Token<TokenType<'a>> {
+    fn from(token: Token<UnaryOperator>) -> Self {
+        Token {
+            token_type: UnaryOperator::to_token_type(token.token_type),
+            line: token.line,
+            start_index_in_source: token.start_index_in_source,
         }
     }
 }

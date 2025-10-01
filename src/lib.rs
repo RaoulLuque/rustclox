@@ -6,6 +6,7 @@ use std::{
 use crate::scanner::Scanner;
 
 pub mod ast;
+pub mod interpreter;
 pub mod parser;
 pub mod scanner;
 

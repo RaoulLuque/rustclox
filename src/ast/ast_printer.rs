@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::ast::{ASTVisitor, Expression};
 
 /// ASTPrinter is a visitor that converts an AST into a parenthesized, Lisp-like string representation.
@@ -10,6 +12,7 @@ impl ASTPrinter {
 
     pub fn print(&self, expr: &Expression) -> String {
         expr.accept(self)
+            .expect("This should never panic as the error type is Infallible")
     }
 
     fn parenthesize(&self, name: &str, exprs: &[&Expression]) -> String {
@@ -18,53 +21,64 @@ impl ASTPrinter {
         result.push_str(name);
         for expr in exprs {
             result.push(' ');
-            result.push_str(&expr.accept(self));
+            result.push_str(
+                &expr
+                    .accept(self)
+                    .expect("This should never panic as the error type is Infallible"),
+            );
         }
         result.push(')');
         result
     }
 }
 
-impl ASTVisitor<String> for ASTPrinter {
-    fn visit_literal(&self, expr: &Expression) -> String {
+impl ASTVisitor<'_> for ASTPrinter {
+    type Output = String;
+    type ErrorType = core::convert::Infallible;
+
+    fn visit_literal(&self, expr: &Expression) -> Result<String, Self::ErrorType> {
         if let Expression::Literal(literal) = expr {
-            format!("{:?}", literal)
+            Ok(format!("{:?}", literal))
         } else {
-            unreachable!()
+            panic!("Expected Literal expression");
         }
     }
 
-    fn visit_grouping(&self, expr: &Expression) -> String {
+    fn visit_grouping(&self, expr: &Expression) -> Result<String, Self::ErrorType> {
         if let Expression::Grouping(inner) = expr {
-            format!("(group {})", inner.accept(self))
+            Ok(format!("(group {})", inner.accept(self).unwrap()))
         } else {
-            unreachable!()
+            panic!("Expected Grouping expression");
         }
     }
 
-    fn visit_unary(&self, expr: &Expression) -> String {
+    fn visit_unary(&self, expr: &Expression) -> Result<String, Self::ErrorType> {
         if let Expression::Unary { operator, right } = expr {
-            format!("({:?} {})", operator.token_type, right.accept(self))
+            Ok(format!(
+                "({:?} {})",
+                operator.token_type,
+                right.accept(self).unwrap()
+            ))
         } else {
-            unreachable!()
+            panic!("Expected Unary expression");
         }
     }
 
-    fn visit_binary(&self, expr: &Expression) -> String {
+    fn visit_binary(&self, expr: &Expression) -> Result<String, Self::ErrorType> {
         if let Expression::Binary {
             left,
             operator,
             right,
         } = expr
         {
-            format!(
+            Ok(format!(
                 "({:?} {} {})",
                 operator.token_type,
-                left.accept(self),
-                right.accept(self)
-            )
+                left.accept(self).unwrap(),
+                right.accept(self).unwrap()
+            ))
         } else {
-            unreachable!()
+            panic!("Expected Binary expression");
         }
     }
 }
