@@ -6,6 +6,7 @@ pub mod token;
 
 const NEWLINE_CHAR: char = '\n';
 
+#[allow(clippy::declare_interior_mutable_const)]
 const KEYWORDS: LazyLock<HashMap<&str, TokenType>> = LazyLock::new(|| {
     let mut m = HashMap::new();
     m.insert("and", TokenType::And);
@@ -184,11 +185,11 @@ impl<'a> Scanner<'a> {
     /// Consumes the current character if it matches the expected character.
     /// Returns true if the character was consumed, false otherwise.
     fn match_current(&mut self, expected: char) -> bool {
-        if let Some(character) = self.peek() {
-            if character == expected {
-                self.advance();
-                return true;
-            }
+        if let Some(character) = self.peek()
+            && character == expected
+        {
+            self.advance();
+            return true;
         }
         false
     }
@@ -214,14 +215,14 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_number(&mut self) {
-        while self.peek().is_some_and(|c| is_digit(c)) {
+        while self.peek().is_some_and(|c| c.is_ascii_digit()) {
             self.advance();
         }
 
-        if self.peek() == Some('.') && self.peek_next().is_some_and(|c| is_digit(c)) {
+        if self.peek() == Some('.') && self.peek_next().is_some_and(|c| c.is_ascii_digit()) {
             // Consume the '.'
             self.advance();
-            while self.peek().is_some_and(|c| is_digit(c)) {
+            while self.peek().is_some_and(|c| c.is_ascii_digit()) {
                 self.advance();
             }
         }
@@ -233,11 +234,15 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_identifier(&mut self) {
-        while self.peek().is_some_and(|c| is_alphanumeric(c)) {
+        while self
+            .peek()
+            .is_some_and(|c| c == '_' || c.is_ascii_alphanumeric())
+        {
             self.advance();
         }
 
         let text = &self.source[self.start..self.current];
+        #[allow(clippy::borrow_interior_mutable_const)]
         let token_type = if let Some(keyword) = KEYWORDS.get(text) {
             *keyword
         } else {
@@ -245,12 +250,4 @@ impl<'a> Scanner<'a> {
         };
         self.add_token(token_type);
     }
-}
-
-fn is_digit(character: char) -> bool {
-    matches!(character, '0'..='9')
-}
-
-fn is_alphanumeric(character: char) -> bool {
-    matches!(character, 'a'..='z' | 'A'..='Z' | '_') || is_digit(character)
 }

@@ -2,7 +2,7 @@ use std::{error::Error, fmt::Display};
 
 use crate::{
     ast::{ASTVisitor, Expression, Token},
-    scanner::token::{Bang, Literal, Minus, Operator, TokenType, UnaryOperator},
+    scanner::token::{Literal, Operator, TokenType, UnaryOperator},
 };
 
 #[derive(PartialEq)]
@@ -106,7 +106,7 @@ impl<'a> ASTVisitor<'a> for Interpreter {
                 (UnaryOperator::Minus(_), LoxObject::Number(n)) => Ok(LoxObject::Number(-n)),
                 (UnaryOperator::Minus(_), _) => Err(RuntimeError::TypeError(
                     "Operand must be a number.".to_string(),
-                    operator.clone().into(),
+                    (*operator).into(),
                 )),
                 (UnaryOperator::Bang(_), right_val) => {
                     Ok(LoxObject::Boolean(!self.is_truthy(right_val)))
@@ -134,7 +134,7 @@ impl<'a> ASTVisitor<'a> for Interpreter {
                 }
                 (_, Operator::Minus, _) => Err(RuntimeError::TypeError(
                     "Operands to Minus need to be numbers.".to_string(),
-                    operator.clone().into(),
+                    (*operator).into(),
                 )),
 
                 (LoxObject::Number(l), Operator::Plus, LoxObject::Number(r)) => {
@@ -145,7 +145,7 @@ impl<'a> ASTVisitor<'a> for Interpreter {
                 }
                 (_, Operator::Plus, _) => Err(RuntimeError::TypeError(
                     "Operands to Plus need to be both numbers or both strings.".to_string(),
-                    operator.clone().into(),
+                    (*operator).into(),
                 )),
 
                 (LoxObject::Number(l), Operator::Star, LoxObject::Number(r)) => {
@@ -153,7 +153,7 @@ impl<'a> ASTVisitor<'a> for Interpreter {
                 }
                 (_, Operator::Star, _) => Err(RuntimeError::TypeError(
                     "Operands to Star need to be numbers.".to_string(),
-                    operator.clone().into(),
+                    (*operator).into(),
                 )),
 
                 (LoxObject::Number(l), Operator::Slash, LoxObject::Number(r)) => {
@@ -161,7 +161,7 @@ impl<'a> ASTVisitor<'a> for Interpreter {
                 }
                 (_, Operator::Slash, _) => Err(RuntimeError::TypeError(
                     "Operands to Slash need to be numbers.".to_string(),
-                    operator.clone().into(),
+                    (*operator).into(),
                 )),
 
                 // Comparison operators (>, >=, <, <=)
@@ -170,7 +170,7 @@ impl<'a> ASTVisitor<'a> for Interpreter {
                 }
                 (_, Operator::Greater, _) => Err(RuntimeError::TypeError(
                     "Operands to Greater need to be numbers.".to_string(),
-                    operator.clone().into(),
+                    (*operator).into(),
                 )),
 
                 (LoxObject::Number(l), Operator::GreaterEqual, LoxObject::Number(r)) => {
@@ -178,7 +178,7 @@ impl<'a> ASTVisitor<'a> for Interpreter {
                 }
                 (_, Operator::GreaterEqual, _) => Err(RuntimeError::TypeError(
                     "Operands to GreaterEqual need to be numbers.".to_string(),
-                    operator.clone().into(),
+                    (*operator).into(),
                 )),
 
                 (LoxObject::Number(l), Operator::Less, LoxObject::Number(r)) => {
@@ -186,7 +186,7 @@ impl<'a> ASTVisitor<'a> for Interpreter {
                 }
                 (_, Operator::Less, _) => Err(RuntimeError::TypeError(
                     "Operands to Less need to be numbers.".to_string(),
-                    operator.clone().into(),
+                    (*operator).into(),
                 )),
 
                 (LoxObject::Number(l), Operator::LessEqual, LoxObject::Number(r)) => {
@@ -194,7 +194,7 @@ impl<'a> ASTVisitor<'a> for Interpreter {
                 }
                 (_, Operator::LessEqual, _) => Err(RuntimeError::TypeError(
                     "Operands to LessEqual need to be numbers.".to_string(),
-                    operator.clone().into(),
+                    (*operator).into(),
                 )),
 
                 // Equality operators (==, !=)
