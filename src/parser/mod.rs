@@ -51,7 +51,7 @@ impl<'a> Parser<'a> {
         let mut statements = Vec::with_capacity(self.tokens.len() / 10 + 1);
         while !self.is_at_end() {
             // TODO: Properly handle errors here
-            statements.push(self.statement()?)
+            statements.push(self.parse_statement()?)
         }
         Ok(statements)
     }
@@ -62,15 +62,15 @@ impl<'a> Parser<'a> {
     /// statement      → exprStmt | printStmt ;
     /// printStmt      → "print" expression ";" ;
     /// exprStmt       → expression ";" ;
-    fn statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
+    fn parse_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
         todo!();
         if self.match_token(&[TokenType::Print]).is_some() {
-            let value = self.expression()?;
+            let value = self.parse_expression()?;
             self.consume(TokenType::Semicolon)?;
             return Ok(Stmt::Print(value));
         }
 
-        let expr = self.expression().unwrap();
+        let expr = self.parse_expression().unwrap();
         self.consume(TokenType::Semicolon).unwrap();
         Ok(Stmt::Expression(expr))
     }
@@ -79,8 +79,8 @@ impl<'a> Parser<'a> {
     ///
     /// The BNF rule is:
     /// expression     → equality ;
-    fn expression(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        self.equality()
+    fn parse_expression(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        self.parse_equality()
     }
 
     /// Parses an equality expression.
@@ -89,13 +89,13 @@ impl<'a> Parser<'a> {
     /// equality       → comparison ( ( "!=" | "==" ) comparison )* ;
     ///
     /// Returns a ParserError if the current token is not a valid equality expression.
-    fn equality(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        let mut expr = self.comparison()?;
+    fn parse_equality(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        let mut expr = self.parse_comparison()?;
 
         while let Some(operator) =
             self.match_token(&[BinaryOperator::BangEqual, BinaryOperator::EqualEqual])
         {
-            let right = self.comparison()?;
+            let right = self.parse_comparison()?;
             expr = Expression::Binary {
                 left: Box::new(expr),
                 operator,
@@ -112,8 +112,8 @@ impl<'a> Parser<'a> {
     /// comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     ///
     /// Returns a ParserError if the current token is not a valid comparison expression.
-    fn comparison(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        let mut expr = self.term()?;
+    fn parse_comparison(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        let mut expr = self.parse_term()?;
 
         while let Some(operator) = self.match_token(&[
             BinaryOperator::Greater,
@@ -121,7 +121,7 @@ impl<'a> Parser<'a> {
             BinaryOperator::Less,
             BinaryOperator::LessEqual,
         ]) {
-            let right = self.term()?;
+            let right = self.parse_term()?;
             expr = Expression::Binary {
                 left: Box::new(expr),
                 operator,
@@ -138,12 +138,12 @@ impl<'a> Parser<'a> {
     /// term           → factor ( ( "-" | "+" ) factor )* ;
     ///
     /// Returns a ParserError if the current token is not a valid term expression.
-    fn term(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        let mut expr = self.factor()?;
+    fn parse_term(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        let mut expr = self.parse_factor()?;
 
         while let Some(operator) = self.match_token(&[BinaryOperator::Minus, BinaryOperator::Plus])
         {
-            let right = self.factor()?;
+            let right = self.parse_factor()?;
             expr = Expression::Binary {
                 left: Box::new(expr),
                 operator,
@@ -160,12 +160,12 @@ impl<'a> Parser<'a> {
     /// factor         → unary ( ( "/" | "*" ) unary )* ;
     ///
     /// Returns a ParserError if the current token is not a valid factor expression.
-    fn factor(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        let mut expr = self.unary()?;
+    fn parse_factor(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        let mut expr = self.parse_unary()?;
 
         while let Some(operator) = self.match_token(&[BinaryOperator::Star, BinaryOperator::Slash])
         {
-            let right = self.unary()?;
+            let right = self.parse_unary()?;
             expr = Expression::Binary {
                 left: Box::new(expr),
                 operator,
@@ -183,17 +183,17 @@ impl<'a> Parser<'a> {
     ///                | primary ;
     ///
     /// Returns a ParserError if the current token is not a valid unary expression.
-    fn unary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+    fn parse_unary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         if let Some(operator) =
             self.match_token(&[UnaryOperator::Minus(Minus {}), UnaryOperator::Bang(Bang {})])
         {
-            let right = self.unary()?;
+            let right = self.parse_unary()?;
             Ok(Expression::Unary {
                 operator,
                 right: Box::new(right),
             })
         } else {
-            self.primary()
+            self.parse_primary()
         }
     }
 
@@ -205,7 +205,7 @@ impl<'a> Parser<'a> {
     ///              | "(" expression ")" ;
     ///
     /// Returns a ParserError if the current token is not a valid primary expression.
-    fn primary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+    fn parse_primary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         if let Some(literal_token) =
             self.match_token(&[Literal::False, Literal::True, Literal::Nil])
         {
@@ -221,7 +221,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.match_token(&[TokenType::LeftParenthesis]).is_some() {
-            let expr = self.expression()?;
+            let expr = self.parse_expression()?;
             self.consume(TokenType::RightParenthesis)?;
             return Ok(Expression::Grouping(Box::new(expr)));
         }
