@@ -38,11 +38,11 @@ pub fn run(source: &str) {
             return;
         }
     };
-    println!("{:#?}", tokens);
+    // println!("{:#?}", tokens);
     let mut parser = parser::Parser::new(tokens);
-    let expression = parser.parse();
+    let statements = parser.parse().unwrap();
 
     let interpreter = Interpreter::new();
 
-    interpreter.interpret(&expression);
+    interpreter.interpret(&statements);
 }

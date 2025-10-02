@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-enum ParserError<'a> {
+pub enum ParserError<'a> {
     UnexpectedToken {
         expected: Vec<TokenType<'a>>,
         found: Token<TokenType<'a>>,

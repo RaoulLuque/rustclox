@@ -1,7 +1,7 @@
 use std::{error::Error, fmt::Display};
 
 use crate::{
-    ast::{ExprVisitor, Expression, Token},
+    ast::{ExprVisitor, Expression, Stmt, StmtVisitor, Token},
     scanner::token::{BinaryOperator, Literal, TokenType, UnaryOperator},
 };
 
@@ -44,10 +44,16 @@ impl Interpreter {
     }
 
     /// Interprets an expression by evaluating it and printing the result.
-    pub fn interpret(&self, expr: &Expression) {
-        // TODO: Properly handle error here
-        let value = self.evaluate(expr).unwrap();
-        println!("{}", self.stringify(value));
+    pub fn interpret(&self, statements: &[Stmt]) {
+        for stmt in statements {
+            // TODO: Properly handle error here
+            self.execute(stmt).unwrap();
+        }
+    }
+
+    /// Executes a statement.
+    fn execute<'a>(&self, stmt: &Stmt<'a>) -> Result<(), RuntimeError<'a>> {
+        stmt.accept(self)
     }
 
     /// Evaluates an expression and returns the resulting LoxObject.
@@ -72,6 +78,30 @@ impl Interpreter {
             LoxObject::Str(s) => s,
             LoxObject::Boolean(b) => b.to_string(),
             LoxObject::Nil => "nil".to_string(),
+        }
+    }
+}
+
+impl<'a> StmtVisitor<'a> for Interpreter {
+    type Output = ();
+    type ErrorType = RuntimeError<'a>;
+
+    fn visit_expression_stmt(&self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType> {
+        if let Stmt::Expression(expr) = stmt {
+            let _ = self.evaluate(expr)?;
+            Ok(())
+        } else {
+            panic!("Expected Expression statement");
+        }
+    }
+
+    fn visit_print_stmt(&self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType> {
+        if let Stmt::Print(expr) = stmt {
+            let value = self.evaluate(expr)?;
+            println!("{}", self.stringify(value));
+            Ok(())
+        } else {
+            panic!("Expected Print statement");
         }
     }
 }
