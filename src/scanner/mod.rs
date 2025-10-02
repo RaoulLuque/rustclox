@@ -84,6 +84,8 @@ impl<'a> Scanner<'a> {
             self.scan_token();
         }
         if self.errors.is_empty() {
+            self.tokens
+                .push(Token::new(TokenType::Eof, self.line, self.current));
             Ok(self.tokens)
         } else {
             Err(self.errors)
