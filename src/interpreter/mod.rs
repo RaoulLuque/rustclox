@@ -2,7 +2,7 @@ use std::{error::Error, fmt::Display};
 
 use crate::{
     ast::{ASTVisitor, Expression, Token},
-    scanner::token::{Literal, Operator, TokenType, UnaryOperator},
+    scanner::token::{Literal, BinaryOperator, TokenType, UnaryOperator},
 };
 
 #[derive(PartialEq)]
@@ -129,77 +129,77 @@ impl<'a> ASTVisitor<'a> for Interpreter {
             let right_val = self.evaluate(right)?;
             match (left_val, operator.token_type, right_val) {
                 // Computation operators (-, +, *, /)
-                (LoxObject::Number(l), Operator::Minus, LoxObject::Number(r)) => {
+                (LoxObject::Number(l), BinaryOperator::Minus, LoxObject::Number(r)) => {
                     Ok(LoxObject::Number(l - r))
                 }
-                (_, Operator::Minus, _) => Err(RuntimeError::TypeError(
+                (_, BinaryOperator::Minus, _) => Err(RuntimeError::TypeError(
                     "Operands to Minus need to be numbers.".to_string(),
                     (*operator).into(),
                 )),
 
-                (LoxObject::Number(l), Operator::Plus, LoxObject::Number(r)) => {
+                (LoxObject::Number(l), BinaryOperator::Plus, LoxObject::Number(r)) => {
                     Ok(LoxObject::Number(l + r))
                 }
-                (LoxObject::Str(l), Operator::Plus, LoxObject::Str(r)) => {
+                (LoxObject::Str(l), BinaryOperator::Plus, LoxObject::Str(r)) => {
                     Ok(LoxObject::Str(l + &r))
                 }
-                (_, Operator::Plus, _) => Err(RuntimeError::TypeError(
+                (_, BinaryOperator::Plus, _) => Err(RuntimeError::TypeError(
                     "Operands to Plus need to be both numbers or both strings.".to_string(),
                     (*operator).into(),
                 )),
 
-                (LoxObject::Number(l), Operator::Star, LoxObject::Number(r)) => {
+                (LoxObject::Number(l), BinaryOperator::Star, LoxObject::Number(r)) => {
                     Ok(LoxObject::Number(l * r))
                 }
-                (_, Operator::Star, _) => Err(RuntimeError::TypeError(
+                (_, BinaryOperator::Star, _) => Err(RuntimeError::TypeError(
                     "Operands to Star need to be numbers.".to_string(),
                     (*operator).into(),
                 )),
 
-                (LoxObject::Number(l), Operator::Slash, LoxObject::Number(r)) => {
+                (LoxObject::Number(l), BinaryOperator::Slash, LoxObject::Number(r)) => {
                     Ok(LoxObject::Number(l / r))
                 }
-                (_, Operator::Slash, _) => Err(RuntimeError::TypeError(
+                (_, BinaryOperator::Slash, _) => Err(RuntimeError::TypeError(
                     "Operands to Slash need to be numbers.".to_string(),
                     (*operator).into(),
                 )),
 
                 // Comparison operators (>, >=, <, <=)
-                (LoxObject::Number(l), Operator::Greater, LoxObject::Number(r)) => {
+                (LoxObject::Number(l), BinaryOperator::Greater, LoxObject::Number(r)) => {
                     Ok(LoxObject::Boolean(l > r))
                 }
-                (_, Operator::Greater, _) => Err(RuntimeError::TypeError(
+                (_, BinaryOperator::Greater, _) => Err(RuntimeError::TypeError(
                     "Operands to Greater need to be numbers.".to_string(),
                     (*operator).into(),
                 )),
 
-                (LoxObject::Number(l), Operator::GreaterEqual, LoxObject::Number(r)) => {
+                (LoxObject::Number(l), BinaryOperator::GreaterEqual, LoxObject::Number(r)) => {
                     Ok(LoxObject::Boolean(l >= r))
                 }
-                (_, Operator::GreaterEqual, _) => Err(RuntimeError::TypeError(
+                (_, BinaryOperator::GreaterEqual, _) => Err(RuntimeError::TypeError(
                     "Operands to GreaterEqual need to be numbers.".to_string(),
                     (*operator).into(),
                 )),
 
-                (LoxObject::Number(l), Operator::Less, LoxObject::Number(r)) => {
+                (LoxObject::Number(l), BinaryOperator::Less, LoxObject::Number(r)) => {
                     Ok(LoxObject::Boolean(l < r))
                 }
-                (_, Operator::Less, _) => Err(RuntimeError::TypeError(
+                (_, BinaryOperator::Less, _) => Err(RuntimeError::TypeError(
                     "Operands to Less need to be numbers.".to_string(),
                     (*operator).into(),
                 )),
 
-                (LoxObject::Number(l), Operator::LessEqual, LoxObject::Number(r)) => {
+                (LoxObject::Number(l), BinaryOperator::LessEqual, LoxObject::Number(r)) => {
                     Ok(LoxObject::Boolean(l <= r))
                 }
-                (_, Operator::LessEqual, _) => Err(RuntimeError::TypeError(
+                (_, BinaryOperator::LessEqual, _) => Err(RuntimeError::TypeError(
                     "Operands to LessEqual need to be numbers.".to_string(),
                     (*operator).into(),
                 )),
 
                 // Equality operators (==, !=)
-                (l, Operator::EqualEqual, r) => Ok(LoxObject::Boolean(l == r)),
-                (l, Operator::BangEqual, r) => Ok(LoxObject::Boolean(l != r)),
+                (l, BinaryOperator::EqualEqual, r) => Ok(LoxObject::Boolean(l == r)),
+                (l, BinaryOperator::BangEqual, r) => Ok(LoxObject::Boolean(l != r)),
             }
         } else {
             panic!("Expected Binary expression");

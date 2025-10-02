@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error, fmt::Display, sync::LazyLock};
 
-use crate::scanner::token::{Literal, Operator, Token, TokenType};
+use crate::scanner::token::{BinaryOperator, Literal, Token, TokenType};
 
 pub mod token;
 
@@ -117,22 +117,22 @@ impl<'a> Scanner<'a> {
                 self.add_token(TokenType::Dot);
             }
             '-' => {
-                self.add_token(TokenType::Operator(Operator::Minus));
+                self.add_token(TokenType::Operator(BinaryOperator::Minus));
             }
             '+' => {
-                self.add_token(TokenType::Operator(Operator::Plus));
+                self.add_token(TokenType::Operator(BinaryOperator::Plus));
             }
             ';' => {
                 self.add_token(TokenType::Semicolon);
             }
             '*' => {
-                self.add_token(TokenType::Operator(Operator::Star));
+                self.add_token(TokenType::Operator(BinaryOperator::Star));
             }
 
             // Possible single character or double character tokens
             '!' => {
                 let token_type = if self.match_current('=') {
-                    TokenType::Operator(Operator::BangEqual)
+                    TokenType::Operator(BinaryOperator::BangEqual)
                 } else {
                     TokenType::Bang
                 };
@@ -140,7 +140,7 @@ impl<'a> Scanner<'a> {
             }
             '=' => {
                 let token_type = if self.match_current('=') {
-                    TokenType::Operator(Operator::EqualEqual)
+                    TokenType::Operator(BinaryOperator::EqualEqual)
                 } else {
                     TokenType::Equal
                 };
@@ -148,17 +148,17 @@ impl<'a> Scanner<'a> {
             }
             '<' => {
                 let token_type = if self.match_current('=') {
-                    TokenType::Operator(Operator::LessEqual)
+                    TokenType::Operator(BinaryOperator::LessEqual)
                 } else {
-                    TokenType::Operator(Operator::Less)
+                    TokenType::Operator(BinaryOperator::Less)
                 };
                 self.add_token(token_type);
             }
             '>' => {
                 let token_type = if self.match_current('=') {
-                    TokenType::Operator(Operator::GreaterEqual)
+                    TokenType::Operator(BinaryOperator::GreaterEqual)
                 } else {
-                    TokenType::Operator(Operator::Greater)
+                    TokenType::Operator(BinaryOperator::Greater)
                 };
                 self.add_token(token_type);
             }
@@ -169,7 +169,7 @@ impl<'a> Scanner<'a> {
                         self.advance();
                     }
                 } else {
-                    self.add_token(TokenType::Operator(Operator::Slash));
+                    self.add_token(TokenType::Operator(BinaryOperator::Slash));
                 }
             }
 

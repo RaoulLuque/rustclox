@@ -47,7 +47,7 @@ pub enum TokenType<'a> {
 
     // Operators
     Identifier(&'a str),
-    Operator(Operator),
+    Operator(BinaryOperator),
     Bang,
 
     // Keywords.
@@ -128,7 +128,7 @@ impl<'a> From<Token<Literal<'a>>> for Token<TokenType<'a>> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Operator {
+pub enum BinaryOperator {
     EqualEqual,
     BangEqual,
     Less,
@@ -141,8 +141,8 @@ pub enum Operator {
     Slash,
 }
 
-impl<'a> TokenSubType<'a, Operator> for Operator {
-    fn from_token_type(token_type: &TokenType<'a>) -> Option<Operator> {
+impl<'a> TokenSubType<'a, BinaryOperator> for BinaryOperator {
+    fn from_token_type(token_type: &TokenType<'a>) -> Option<BinaryOperator> {
         if let TokenType::Operator(operator) = token_type {
             Some(*operator)
         } else {
@@ -150,13 +150,13 @@ impl<'a> TokenSubType<'a, Operator> for Operator {
         }
     }
 
-    fn to_token_type(token_sub_type: Operator) -> TokenType<'a> {
+    fn to_token_type(token_sub_type: BinaryOperator) -> TokenType<'a> {
         TokenType::Operator(token_sub_type)
     }
 }
 
-impl<'a> From<Token<Operator>> for Token<TokenType<'a>> {
-    fn from(token: Token<Operator>) -> Self {
+impl<'a> From<Token<BinaryOperator>> for Token<TokenType<'a>> {
+    fn from(token: Token<BinaryOperator>) -> Self {
         Token {
             token_type: TokenType::Operator(token.token_type),
             line: token.line,
@@ -174,7 +174,7 @@ pub enum UnaryOperator {
 impl<'a> TokenSubType<'a, UnaryOperator> for UnaryOperator {
     fn from_token_type(token_type: &TokenType<'a>) -> Option<UnaryOperator> {
         match token_type {
-            TokenType::Operator(Operator::Minus) => Some(UnaryOperator::Minus(Minus {})),
+            TokenType::Operator(BinaryOperator::Minus) => Some(UnaryOperator::Minus(Minus {})),
             TokenType::Bang => Some(UnaryOperator::Bang(Bang {})),
             _ => None,
         }
@@ -182,7 +182,7 @@ impl<'a> TokenSubType<'a, UnaryOperator> for UnaryOperator {
 
     fn to_token_type(token_sub_type: UnaryOperator) -> TokenType<'a> {
         match token_sub_type {
-            UnaryOperator::Minus(_) => TokenType::Operator(Operator::Minus),
+            UnaryOperator::Minus(_) => TokenType::Operator(BinaryOperator::Minus),
             UnaryOperator::Bang(_) => TokenType::Bang,
         }
     }

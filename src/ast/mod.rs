@@ -1,20 +1,33 @@
 use std::error::Error;
 
 pub use crate::scanner::token::Token;
-use crate::scanner::token::{Literal, Operator, UnaryOperator};
+use crate::scanner::token::{Literal, BinaryOperator, UnaryOperator};
 
 pub mod ast_printer;
 
+/// A statement in the AST.
+pub enum Stmt<'a> {
+    /// An expression statement. Is followed by a semicolon ';'.
+    Expression(Expression<'a>),
+    /// A print statement. Is preceded by 'print' and followed by a semicolon ';'.
+    Print(Expression<'a>),
+}
+
+/// An expression in the AST.
 pub enum Expression<'a> {
+    /// A literal value.
     Literal(Literal<'a>),
+    /// A grouping of expressions, enclosed in parentheses '(' - grouping here - ')'.
     Grouping(Box<Expression<'a>>),
+    /// A unary operation of Operation type [UnaryOperation].
     Unary {
         operator: Token<UnaryOperator>,
         right: Box<Expression<'a>>,
     },
+    /// A binary operation of Operation type [Operator].
     Binary {
         left: Box<Expression<'a>>,
-        operator: Token<Operator>,
+        operator: Token<BinaryOperator>,
         right: Box<Expression<'a>>,
     },
 }

@@ -2,7 +2,9 @@ use std::{error::Error, fmt::Display};
 
 use crate::{
     ast::{Expression, Token},
-    scanner::token::{Bang, Literal, Minus, Operator, TokenSubType, TokenType, UnaryOperator},
+    scanner::token::{
+        Bang, BinaryOperator, Literal, Minus, TokenSubType, TokenType, UnaryOperator,
+    },
 };
 
 #[derive(Debug)]
@@ -62,7 +64,9 @@ impl<'a> Parser<'a> {
     fn equality(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.comparison()?;
 
-        while let Some(operator) = self.match_token(&[Operator::BangEqual, Operator::EqualEqual]) {
+        while let Some(operator) =
+            self.match_token(&[BinaryOperator::BangEqual, BinaryOperator::EqualEqual])
+        {
             let right = self.comparison()?;
             expr = Expression::Binary {
                 left: Box::new(expr),
@@ -84,10 +88,10 @@ impl<'a> Parser<'a> {
         let mut expr = self.term()?;
 
         while let Some(operator) = self.match_token(&[
-            Operator::Greater,
-            Operator::GreaterEqual,
-            Operator::Less,
-            Operator::LessEqual,
+            BinaryOperator::Greater,
+            BinaryOperator::GreaterEqual,
+            BinaryOperator::Less,
+            BinaryOperator::LessEqual,
         ]) {
             let right = self.term()?;
             expr = Expression::Binary {
@@ -109,7 +113,8 @@ impl<'a> Parser<'a> {
     fn term(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.factor()?;
 
-        while let Some(operator) = self.match_token(&[Operator::Minus, Operator::Plus]) {
+        while let Some(operator) = self.match_token(&[BinaryOperator::Minus, BinaryOperator::Plus])
+        {
             let right = self.factor()?;
             expr = Expression::Binary {
                 left: Box::new(expr),
@@ -130,7 +135,8 @@ impl<'a> Parser<'a> {
     fn factor(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.unary()?;
 
-        while let Some(operator) = self.match_token(&[Operator::Star, Operator::Slash]) {
+        while let Some(operator) = self.match_token(&[BinaryOperator::Star, BinaryOperator::Slash])
+        {
             let right = self.unary()?;
             expr = Expression::Binary {
                 left: Box::new(expr),
