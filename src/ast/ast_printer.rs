@@ -1,6 +1,6 @@
 use core::panic;
 
-use crate::ast::{ASTVisitor, Expression};
+use crate::ast::{ExprVisitor, Expression};
 
 /// ASTPrinter is a visitor that converts an AST into a parenthesized, Lisp-like string representation.
 pub struct ASTPrinter {}
@@ -32,7 +32,7 @@ impl ASTPrinter {
     }
 }
 
-impl ASTVisitor<'_> for ASTPrinter {
+impl ExprVisitor<'_> for ASTPrinter {
     type Output = String;
     type ErrorType = core::convert::Infallible;
 

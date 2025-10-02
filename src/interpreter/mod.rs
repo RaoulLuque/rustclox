@@ -1,8 +1,8 @@
 use std::{error::Error, fmt::Display};
 
 use crate::{
-    ast::{ASTVisitor, Expression, Token},
-    scanner::token::{Literal, BinaryOperator, TokenType, UnaryOperator},
+    ast::{ExprVisitor, Expression, Token},
+    scanner::token::{BinaryOperator, Literal, TokenType, UnaryOperator},
 };
 
 #[derive(PartialEq)]
@@ -76,7 +76,7 @@ impl Interpreter {
     }
 }
 
-impl<'a> ASTVisitor<'a> for Interpreter {
+impl<'a> ExprVisitor<'a> for Interpreter {
     type Output = LoxObject;
     type ErrorType = RuntimeError<'a>;
 

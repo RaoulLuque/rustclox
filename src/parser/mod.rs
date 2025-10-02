@@ -60,18 +60,31 @@ impl<'a> Parser<'a> {
     ///
     /// The BNF rules are:
     /// statement      → exprStmt | printStmt ;
-    /// printStmt      → "print" expression ";" ;
-    /// exprStmt       → expression ";" ;
     fn parse_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
-        todo!();
         if self.match_token(&[TokenType::Print]).is_some() {
-            let value = self.parse_expression()?;
-            self.consume(TokenType::Semicolon)?;
-            return Ok(Stmt::Print(value));
+            self.parse_print_statement()
+        } else {
+            self.parse_expression_statement()
         }
+    }
 
-        let expr = self.parse_expression().unwrap();
-        self.consume(TokenType::Semicolon).unwrap();
+    /// Parses a print statement and returns the resulting AST node.
+    ///
+    /// The BNF rule is:
+    /// printStmt      → "print" expression ";" ;
+    fn parse_print_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
+        let value = self.parse_expression()?;
+        self.consume(TokenType::Semicolon)?;
+        Ok(Stmt::Print(value))
+    }
+
+    /// Parses an expression statement and returns the resulting AST node.
+    ///
+    /// The BNF rule is:
+    /// exprStmt       → expression ";" ;
+    fn parse_expression_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
+        let expr = self.parse_expression()?;
+        self.consume(TokenType::Semicolon)?;
         Ok(Stmt::Expression(expr))
     }
 
