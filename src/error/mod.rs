@@ -1,5 +1,7 @@
 use std::{error::Error, fmt::Display};
 
+use colored::Colorize;
+
 use crate::scanner::ScannerError;
 
 #[derive(Debug)]
@@ -33,13 +35,14 @@ impl CloxError {
     pub fn report_error(self, source: &str) {
         match self {
             CloxError::ScannerError(scanner_error) => match scanner_error {
-                ScannerError::UnknownToken(_, line, current) => {
+                ScannerError::UnknownToken(char, line, current) => {
                     let (line_content, col) = find_location_in_source(source, line, current);
                     eprintln!(
-                        "Scanner Error: Unknown Token \n\nline: {line:3} | {}\n          | {}\n          | {}",
+                        "{} \n\nline: {line:3} | {}\n          | {}\n          | {}",
+                        format!("Scanner Error: Unknown Token: \"{}\"", char).red(),
                         line_content,
-                        " ".repeat(col) + "^",
-                        " ".repeat(col) + "Here"
+                        format!("{}{}", " ".repeat(col), "^".yellow()),
+                        format!("{}{}", " ".repeat(col), "Here".yellow())
                     );
                 }
             },

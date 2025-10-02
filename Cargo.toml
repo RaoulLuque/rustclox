@@ -12,3 +12,4 @@ default-run = "clox"
 
 [dependencies]
 clap = {version = "4.5", features = ["derive"]}
+colored = "3.0.0"
