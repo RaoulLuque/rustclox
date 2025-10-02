@@ -1,7 +1,7 @@
 use std::{error::Error, fmt::Display};
 
 use crate::{
-    ast::{Expression, Token},
+    ast::{Expression, Stmt, Token},
     scanner::token::{
         Bang, BinaryOperator, Literal, Minus, TokenSubType, TokenType, UnaryOperator,
     },
@@ -32,8 +32,11 @@ impl Display for ParserError<'_> {
 
 impl Error for ParserError<'_> {}
 
+/// A recursive descent parser for the Lox programming language.
 pub struct Parser<'a> {
+    /// The list of tokens to parse.
     tokens: Vec<Token<TokenType<'a>>>,
+    /// The index of the current token being parsed in the vec of tokens.
     current: usize,
 }
 
@@ -42,9 +45,34 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Expression<'a> {
-        // TODO: Properly handle error here
-        self.expression().unwrap()
+    /// Parses the list of tokens and returns a vector of statements representing the AST.
+    pub fn parse(&mut self) -> Result<Vec<Stmt<'a>>, ParserError<'a>> {
+        // Initialize with a rough estimate TODO: Possibly optimize this
+        let mut statements = Vec::with_capacity(self.tokens.len() / 10 + 1);
+        while !self.is_at_end() {
+            // TODO: Properly handle errors here
+            statements.push(self.statement()?)
+        }
+        Ok(statements)
+    }
+
+    /// Parses a statement and returns the resulting AST node.
+    ///
+    /// The BNF rules are:
+    /// statement      → exprStmt | printStmt ;
+    /// printStmt      → "print" expression ";" ;
+    /// exprStmt       → expression ";" ;
+    fn statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
+        todo!();
+        if self.match_token(&[TokenType::Print]).is_some() {
+            let value = self.expression()?;
+            self.consume(TokenType::Semicolon)?;
+            return Ok(Stmt::Print(value));
+        }
+
+        let expr = self.expression().unwrap();
+        self.consume(TokenType::Semicolon).unwrap();
+        Ok(Stmt::Expression(expr))
     }
 
     /// Parses an expression and returns the resulting AST node.
