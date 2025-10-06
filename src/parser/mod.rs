@@ -278,6 +278,12 @@ impl<'a> Parser<'a> {
             return Ok(Expression::Literal(string_token.token_type));
         }
 
+        if let Some(identifier) = self.match_token(&[Identifier { name: "" }]) {
+            return Ok(Expression::Identifier(Identifier {
+                name: identifier.token_type.name,
+            }));
+        }
+
         if self.match_token(&[TokenType::LeftParenthesis]).is_some() {
             let expr = self.parse_expression()?;
             self.consume(TokenType::RightParenthesis)?;
@@ -297,8 +303,10 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// Checks if the current token matches any of the given types. If so, consumes the current token and returns true.
+    /// Checks if the current token's type matches any of the given types. If so, consumes the current token and returns true.
     /// Otherwise, returns false.
+    ///
+    /// In particular, the value or associated data of the token is ignored when matching.
     fn match_token<T: TokenSubType<'a, T>>(&mut self, types: &[T]) -> Option<Token<T>> {
         for token_type in types {
             if self.check(token_type) {

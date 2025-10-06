@@ -49,6 +49,8 @@ pub enum Expression<'a> {
         operator: Token<BinaryOperator>,
         right: Box<Expression<'a>>,
     },
+    /// An identifier.
+    Identifier(Identifier<'a>),
 }
 
 impl<'a> Expression<'a> {
