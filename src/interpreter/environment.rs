@@ -17,7 +17,7 @@ impl Environment {
         self.variables.insert(name.to_string(), value);
     }
 
-    pub fn get(&self, name: &str) -> Result<&LoxObject, RuntimeError<'_>> {
+    pub fn get<'a>(&self, name: &'a str) -> Result<&LoxObject, RuntimeError<'a>> {
         self.variables
             .get(name)
             .ok_or_else(|| RuntimeError::UndefinedVariable(name.to_string()))

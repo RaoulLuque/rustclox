@@ -260,7 +260,8 @@ impl<'a> Parser<'a> {
     /// The BNF rule is:
     /// primary        → "true" | "false" | "nil"
     ///               | NUMBER | STRING
-    ///              | "(" expression ")" ;
+    ///               | "(" expression ")" ;
+    ///               | IDENTIFIER ;
     ///
     /// Returns a ParserError if the current token is not a valid primary expression.
     fn parse_primary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {

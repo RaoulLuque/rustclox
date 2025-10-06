@@ -65,4 +65,12 @@ impl ExprVisitor<'_> for ASTPrinter {
             panic!("Expected Binary expression");
         }
     }
+
+    fn visit_identifier(&self, expr: &Expression<'_>) -> Result<Self::Output, Self::ErrorType> {
+        if let Expression::Identifier(ident) = expr {
+            Ok(ident.name.to_string())
+        } else {
+            panic!("Expected Identifier expression");
+        }
+    }
 }

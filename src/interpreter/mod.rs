@@ -8,7 +8,7 @@ use crate::{
 
 mod environment;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum LoxObject {
     Number(f32),
     Str(String),
@@ -258,6 +258,14 @@ impl<'a> ExprVisitor<'a> for Interpreter {
             }
         } else {
             panic!("Expected Binary expression");
+        }
+    }
+
+    fn visit_identifier(&self, expr: &Expression<'a>) -> Result<Self::Output, Self::ErrorType> {
+        if let Expression::Identifier(ident) = expr {
+            self.environment.get(ident.name).cloned()
+        } else {
+            panic!("Expected Identifier expression");
         }
     }
 }

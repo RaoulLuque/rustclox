@@ -56,7 +56,7 @@ impl<'a> Expression<'a> {
             Expression::Grouping(_) => visitor.visit_grouping(self),
             Expression::Unary { .. } => visitor.visit_unary(self),
             Expression::Binary { .. } => visitor.visit_binary(self),
-            Expression::Identifier(_) => todo!(),
+            Expression::Identifier(_) => visitor.visit_identifier(self),
         }
     }
 }
@@ -78,4 +78,5 @@ pub trait ExprVisitor<'a> {
     fn visit_grouping(&self, expr: &Expression<'a>) -> Result<Self::Output, Self::ErrorType>;
     fn visit_unary(&self, expr: &Expression<'a>) -> Result<Self::Output, Self::ErrorType>;
     fn visit_binary(&self, expr: &Expression<'a>) -> Result<Self::Output, Self::ErrorType>;
+    fn visit_identifier(&self, expr: &Expression<'a>) -> Result<Self::Output, Self::ErrorType>;
 }
