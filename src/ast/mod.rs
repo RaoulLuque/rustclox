@@ -1,7 +1,7 @@
 use std::error::Error;
 
 pub use crate::scanner::token::Token;
-use crate::scanner::token::{BinaryOperator, Identifier, Literal, TokenType, UnaryOperator};
+use crate::scanner::token::{BinaryOperator, Identifier, Literal, UnaryOperator};
 
 pub mod ast_printer;
 
@@ -12,22 +12,22 @@ pub enum Decl<'a> {
         name: Token<Identifier<'a>>,
         initializer: Expression<'a>,
     },
-    Statement(Decl<'a>),
+    Statement(Stmt<'a>),
 }
 
 /// A statement in the AST.
-pub enum Decl<'a> {
+pub enum Stmt<'a> {
     /// An expression statement. Is followed by a semicolon ';'.
     Expression(Expression<'a>),
     /// A print statement. Is preceded by 'print' and followed by a semicolon ';'.
     Print(Expression<'a>),
 }
 
-impl<'a> Decl<'a> {
+impl<'a> Stmt<'a> {
     pub fn accept<V: StmtVisitor<'a>>(&self, visitor: &V) -> Result<V::Output, V::ErrorType> {
         match self {
-            Decl::Expression(_) => visitor.visit_expression_stmt(self),
-            Decl::Print(_) => visitor.visit_print_stmt(self),
+            Stmt::Expression(_) => visitor.visit_expression_stmt(self),
+            Stmt::Print(_) => visitor.visit_print_stmt(self),
         }
     }
 }
@@ -66,8 +66,8 @@ pub trait StmtVisitor<'a> {
     type Output;
     type ErrorType: Error;
 
-    fn visit_expression_stmt(&self, stmt: &Decl<'a>) -> Result<Self::Output, Self::ErrorType>;
-    fn visit_print_stmt(&self, stmt: &Decl<'a>) -> Result<Self::Output, Self::ErrorType>;
+    fn visit_expression_stmt(&self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType>;
+    fn visit_print_stmt(&self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType>;
 }
 
 pub trait ExprVisitor<'a> {

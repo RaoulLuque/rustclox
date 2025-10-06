@@ -1,9 +1,10 @@
 use std::{error::Error, fmt::Display};
 
 use crate::{
-    ast::{Decl, Decl, Expression, Token},
+    ast::{Decl, Expression, Stmt, Token},
+    error::CloxError,
     scanner::token::{
-        Bang, BinaryOperator, Literal, Minus, TokenSubType, TokenType, UnaryOperator,
+        Bang, BinaryOperator, Identifier, Literal, Minus, TokenSubType, TokenType, UnaryOperator,
     },
 };
 
@@ -45,15 +46,22 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
-    /// Parses the list of tokens and returns a vector of statements representing the AST.
-    pub fn parse(&mut self) -> Result<Vec<Decl<'a>>, ParserError<'a>> {
+    /// Parses the list of tokens and returns a vector of declarations representing the AST.
+    /// Synchronizes the parser if an error is encountered.
+    pub fn parse(&mut self, source: &str) -> Vec<Decl<'a>> {
         // Initialize with a rough estimate TODO: Possibly optimize this
         let mut declarations = Vec::with_capacity(self.tokens.len() / 10 + 1);
         while !self.is_at_end() {
-            // TODO: Properly handle errors here
-            declarations.push(self.parse_statement()?)
+            match self.parse_declaration() {
+                Ok(decl) => declarations.push(decl),
+                Err(err) => {
+                    self.synchronize();
+                    // Report the error
+                    CloxError::ParserError(err).report_error(source);
+                }
+            }
         }
-        Ok(declarations)
+        declarations
     }
 
     /// Parses a declaration and returns the resulting AST node.
@@ -63,15 +71,9 @@ impl<'a> Parser<'a> {
     /// declaration    → varDecl | statement ;
     fn parse_declaration(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
         if self.match_token(&[TokenType::Var]).is_some() {
-            self.parse_var_declaration().or_else(|err| {
-                self.synchronize();
-                Err(err)
-            })
+            self.parse_var_declaration()
         } else {
-            Ok(Decl::Statement(self.parse_statement().or_else(|err| {
-                self.synchronize();
-                Err(err)
-            })?))
+            Ok(Decl::Statement(self.parse_statement()?))
         }
     }
 
@@ -103,7 +105,7 @@ impl<'a> Parser<'a> {
     ///
     /// The BNF rules are:
     /// statement      → exprStmt | printStmt ;
-    fn parse_statement(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
+    fn parse_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
         if self.match_token(&[TokenType::Print]).is_some() {
             self.parse_print_statement()
         } else {
@@ -115,20 +117,20 @@ impl<'a> Parser<'a> {
     ///
     /// The BNF rule is:
     /// printStmt      → "print" expression ";" ;
-    fn parse_print_statement(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
+    fn parse_print_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
         let value = self.parse_expression()?;
         self.consume(TokenType::Semicolon)?;
-        Ok(Decl::Print(value))
+        Ok(Stmt::Print(value))
     }
 
     /// Parses an expression statement and returns the resulting AST node.
     ///
     /// The BNF rule is:
     /// exprStmt       → expression ";" ;
-    fn parse_expression_statement(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
+    fn parse_expression_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
         let expr = self.parse_expression()?;
         self.consume(TokenType::Semicolon)?;
-        Ok(Decl::Expression(expr))
+        Ok(Stmt::Expression(expr))
     }
 
     /// Parses an expression and returns the resulting AST node.

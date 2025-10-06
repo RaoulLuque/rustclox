@@ -1,7 +1,7 @@
 use std::{error::Error, fmt::Display};
 
 use crate::{
-    ast::{Decl, ExprVisitor, Expression, StmtVisitor, Token},
+    ast::{Decl, ExprVisitor, Expression, Stmt, StmtVisitor, Token},
     scanner::token::{BinaryOperator, Literal, TokenType, UnaryOperator},
 };
 
@@ -52,7 +52,7 @@ impl Interpreter {
     }
 
     /// Executes a statement.
-    fn execute<'a>(&self, stmt: &Decl<'a>) -> Result<(), RuntimeError<'a>> {
+    fn execute<'a>(&self, stmt: &Stmt<'a>) -> Result<(), RuntimeError<'a>> {
         stmt.accept(self)
     }
 
@@ -86,8 +86,8 @@ impl<'a> StmtVisitor<'a> for Interpreter {
     type Output = ();
     type ErrorType = RuntimeError<'a>;
 
-    fn visit_expression_stmt(&self, stmt: &Decl<'a>) -> Result<Self::Output, Self::ErrorType> {
-        if let Decl::Expression(expr) = stmt {
+    fn visit_expression_stmt(&self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType> {
+        if let Stmt::Expression(expr) = stmt {
             let _ = self.evaluate(expr)?;
             Ok(())
         } else {
@@ -95,8 +95,8 @@ impl<'a> StmtVisitor<'a> for Interpreter {
         }
     }
 
-    fn visit_print_stmt(&self, stmt: &Decl<'a>) -> Result<Self::Output, Self::ErrorType> {
-        if let Decl::Print(expr) = stmt {
+    fn visit_print_stmt(&self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType> {
+        if let Stmt::Print(expr) = stmt {
             let value = self.evaluate(expr)?;
             println!("{}", self.stringify(value));
             Ok(())
