@@ -5,7 +5,7 @@ use crate::{
     scanner::token::{BinaryOperator, Literal, TokenType, UnaryOperator},
 };
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum LoxObject {
     Number(f32),
     Str(String),
@@ -16,6 +16,7 @@ pub enum LoxObject {
 #[derive(Debug)]
 pub enum RuntimeError<'a> {
     TypeError(String, Token<TokenType<'a>>),
+    UndefinedVariable(String),
 }
 
 // TODO: Pretty print the error message
