@@ -40,9 +40,9 @@ pub fn run(source: &str) {
     };
     // println!("{:#?}", tokens);
     let mut parser = parser::Parser::new(tokens);
-    let statements = parser.parse().unwrap();
+    let declarations = parser.parse().unwrap();
 
     let interpreter = Interpreter::new();
 
-    interpreter.interpret(&statements);
+    interpreter.interpret(&declarations);
 }

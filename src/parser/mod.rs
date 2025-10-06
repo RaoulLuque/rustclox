@@ -1,7 +1,7 @@
 use std::{error::Error, fmt::Display};
 
 use crate::{
-    ast::{Expression, Stmt, Token},
+    ast::{Decl, Decl, Expression, Token},
     scanner::token::{
         Bang, BinaryOperator, Literal, Minus, TokenSubType, TokenType, UnaryOperator,
     },
@@ -46,21 +46,64 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses the list of tokens and returns a vector of statements representing the AST.
-    pub fn parse(&mut self) -> Result<Vec<Stmt<'a>>, ParserError<'a>> {
+    pub fn parse(&mut self) -> Result<Vec<Decl<'a>>, ParserError<'a>> {
         // Initialize with a rough estimate TODO: Possibly optimize this
-        let mut statements = Vec::with_capacity(self.tokens.len() / 10 + 1);
+        let mut declarations = Vec::with_capacity(self.tokens.len() / 10 + 1);
         while !self.is_at_end() {
             // TODO: Properly handle errors here
-            statements.push(self.parse_statement()?)
+            declarations.push(self.parse_statement()?)
         }
-        Ok(statements)
+        Ok(declarations)
+    }
+
+    /// Parses a declaration and returns the resulting AST node.
+    /// Synchronizes the parser if an error is encountered.
+    ///
+    /// The BNF rules are:
+    /// declaration    → varDecl | statement ;
+    fn parse_declaration(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
+        if self.match_token(&[TokenType::Var]).is_some() {
+            self.parse_var_declaration().or_else(|err| {
+                self.synchronize();
+                Err(err)
+            })
+        } else {
+            Ok(Decl::Statement(self.parse_statement().or_else(|err| {
+                self.synchronize();
+                Err(err)
+            })?))
+        }
+    }
+
+    /// Parses a variable declaration and returns the resulting AST node.
+    ///
+    /// The BNF rule is:
+    /// varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+    fn parse_var_declaration(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
+        let name_token = self
+            .consume(TokenType::Identifier(Identifier { name: "" }))?
+            .to_token_sub_type(&Identifier { name: "" })
+            .unwrap(); // We just consumed an identifier, so this is safe
+
+        let initializer = if self.match_token(&[TokenType::Equal]).is_some() {
+            self.parse_expression()?
+        } else {
+            Expression::Literal(Literal::Nil)
+        };
+
+        self.consume(TokenType::Semicolon)?;
+
+        Ok(Decl::Var {
+            name: name_token,
+            initializer,
+        })
     }
 
     /// Parses a statement and returns the resulting AST node.
     ///
     /// The BNF rules are:
     /// statement      → exprStmt | printStmt ;
-    fn parse_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
+    fn parse_statement(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
         if self.match_token(&[TokenType::Print]).is_some() {
             self.parse_print_statement()
         } else {
@@ -72,20 +115,20 @@ impl<'a> Parser<'a> {
     ///
     /// The BNF rule is:
     /// printStmt      → "print" expression ";" ;
-    fn parse_print_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
+    fn parse_print_statement(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
         let value = self.parse_expression()?;
         self.consume(TokenType::Semicolon)?;
-        Ok(Stmt::Print(value))
+        Ok(Decl::Print(value))
     }
 
     /// Parses an expression statement and returns the resulting AST node.
     ///
     /// The BNF rule is:
     /// exprStmt       → expression ";" ;
-    fn parse_expression_statement(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
+    fn parse_expression_statement(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
         let expr = self.parse_expression()?;
         self.consume(TokenType::Semicolon)?;
-        Ok(Stmt::Expression(expr))
+        Ok(Decl::Expression(expr))
     }
 
     /// Parses an expression and returns the resulting AST node.

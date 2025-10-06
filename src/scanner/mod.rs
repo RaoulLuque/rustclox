@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error, fmt::Display, sync::LazyLock};
 
-use crate::scanner::token::{BinaryOperator, Literal, Token, TokenType};
+use crate::scanner::token::{BinaryOperator, Identifier, Literal, Token, TokenType};
 
 pub mod token;
 
@@ -286,7 +286,7 @@ impl<'a> Scanner<'a> {
         let token_type = if let Some(keyword) = KEYWORDS.get(text) {
             *keyword
         } else {
-            TokenType::Identifier(text)
+            TokenType::Identifier(Identifier { name: text })
         };
         self.add_token(token_type);
     }

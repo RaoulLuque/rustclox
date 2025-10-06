@@ -46,7 +46,7 @@ pub enum TokenType<'a> {
     Literal(Literal<'a>),
 
     // Operators
-    Identifier(&'a str),
+    Identifier(Identifier<'a>),
     Operator(BinaryOperator),
     Bang,
 
@@ -202,3 +202,34 @@ impl<'a> From<Token<UnaryOperator>> for Token<TokenType<'a>> {
 pub struct Bang {}
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Minus {}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Identifier<'a> {
+    pub name: &'a str,
+}
+
+impl<'a> TokenSubType<'a, Identifier<'a>> for Identifier<'a> {
+    fn from_token_type(token_type: &TokenType<'a>) -> Option<Identifier<'a>> {
+        if let TokenType::Identifier(identifier) = token_type {
+            Some(Identifier {
+                name: identifier.name,
+            })
+        } else {
+            None
+        }
+    }
+
+    fn to_token_type(token_sub_type: Identifier<'a>) -> TokenType<'a> {
+        TokenType::Identifier(token_sub_type)
+    }
+}
+
+impl<'a> From<Token<Identifier<'a>>> for Token<TokenType<'a>> {
+    fn from(token: Token<Identifier<'a>>) -> Self {
+        Token {
+            token_type: TokenType::Identifier(token.token_type),
+            line: token.line,
+            start_index_in_source: token.start_index_in_source,
+        }
+    }
+}
