@@ -14,22 +14,6 @@ impl ASTPrinter {
         expr.accept(self)
             .expect("This should never panic as the error type is Infallible")
     }
-
-    fn parenthesize(&self, name: &str, exprs: &[&Expression]) -> String {
-        let mut result = String::new();
-        result.push('(');
-        result.push_str(name);
-        for expr in exprs {
-            result.push(' ');
-            result.push_str(
-                &expr
-                    .accept(self)
-                    .expect("This should never panic as the error type is Infallible"),
-            );
-        }
-        result.push(')');
-        result
-    }
 }
 
 impl ExprVisitor<'_> for ASTPrinter {
