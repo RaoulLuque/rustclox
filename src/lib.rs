@@ -6,7 +6,6 @@ use std::{
 use crate::{error::CloxError, interpreter::Interpreter, scanner::Scanner};
 
 pub mod ast;
-pub mod environment;
 pub mod error;
 pub mod interpreter;
 pub mod parser;
@@ -43,7 +42,7 @@ pub fn run(source: &str) {
     let mut parser = parser::Parser::new(tokens);
     let declarations = parser.parse(source);
 
-    let interpreter = Interpreter::new();
+    let mut interpreter = Interpreter::new();
 
     interpreter.interpret(&declarations);
 }

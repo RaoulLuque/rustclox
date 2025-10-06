@@ -1,9 +1,12 @@
 use std::{error::Error, fmt::Display};
 
 use crate::{
-    ast::{Decl, ExprVisitor, Expression, Stmt, StmtVisitor, Token},
+    ast::{ExprVisitor, Expression, Stmt, StmtVisitor, Token},
+    interpreter::environment::Environment,
     scanner::token::{BinaryOperator, Literal, TokenType, UnaryOperator},
 };
+
+mod environment;
 
 #[derive(PartialEq, Debug)]
 pub enum LoxObject {
@@ -30,22 +33,29 @@ impl Display for RuntimeError<'_> {
                     token.line, token, msg
                 )
             }
+            RuntimeError::UndefinedVariable(name) => {
+                write!(f, "RuntimeError: Undefined variable '{}'", name)
+            }
         }
     }
 }
 
 impl Error for RuntimeError<'_> {}
 
-pub struct Interpreter {}
+pub struct Interpreter {
+    environment: Environment,
+}
 
 impl Interpreter {
     /// Creates a new Interpreter instance.
     pub fn new() -> Self {
-        Interpreter {}
+        Interpreter {
+            environment: Environment::new(),
+        }
     }
 
     /// Interprets an expression by evaluating it and printing the result.
-    pub fn interpret(&self, declarations: &[Decl]) {
+    pub fn interpret(&mut self, declarations: &[Stmt]) {
         for declaration in declarations {
             // TODO: Properly handle error here
             self.execute(declaration).unwrap();
@@ -53,7 +63,7 @@ impl Interpreter {
     }
 
     /// Executes a statement.
-    fn execute<'a>(&self, stmt: &Stmt<'a>) -> Result<(), RuntimeError<'a>> {
+    fn execute<'a>(&mut self, stmt: &Stmt<'a>) -> Result<(), RuntimeError<'a>> {
         stmt.accept(self)
     }
 
@@ -103,6 +113,20 @@ impl<'a> StmtVisitor<'a> for Interpreter {
             Ok(())
         } else {
             panic!("Expected Print statement");
+        }
+    }
+
+    fn visit_var_stmt(&mut self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType> {
+        if let Stmt::Var {
+            name: name_token,
+            initializer,
+        } = stmt
+        {
+            let value = self.evaluate(initializer)?;
+            self.environment.define(name_token.token_type.name, value);
+            Ok(())
+        } else {
+            panic!("Expected Var statement");
         }
     }
 }

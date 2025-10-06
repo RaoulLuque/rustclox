@@ -1,7 +1,7 @@
 use std::{error::Error, fmt::Display};
 
 use crate::{
-    ast::{Decl, Expression, Stmt, Token},
+    ast::{Expression, Stmt, Token},
     error::CloxError,
     scanner::token::{
         Bang, BinaryOperator, Identifier, Literal, Minus, TokenSubType, TokenType, UnaryOperator,
@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
 
     /// Parses the list of tokens and returns a vector of declarations representing the AST.
     /// Synchronizes the parser if an error is encountered.
-    pub fn parse(&mut self, source: &str) -> Vec<Decl<'a>> {
+    pub fn parse(&mut self, source: &str) -> Vec<Stmt<'a>> {
         // Initialize with a rough estimate TODO: Possibly optimize this
         let mut declarations = Vec::with_capacity(self.tokens.len() / 10 + 1);
         while !self.is_at_end() {
@@ -69,19 +69,19 @@ impl<'a> Parser<'a> {
     ///
     /// The BNF rules are:
     /// declaration    → varDecl | statement ;
-    fn parse_declaration(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
+    fn parse_declaration(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
         if self.match_token(&[TokenType::Var]).is_some() {
             self.parse_var_declaration()
         } else {
-            Ok(Decl::Statement(self.parse_statement()?))
+            Ok(self.parse_statement()?)
         }
     }
 
-    /// Parses a variable declaration and returns the resulting AST node.
+    /// Parses a variable declaration and returns the resulting AST node (as a statement).
     ///
     /// The BNF rule is:
     /// varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-    fn parse_var_declaration(&mut self) -> Result<Decl<'a>, ParserError<'a>> {
+    fn parse_var_declaration(&mut self) -> Result<Stmt<'a>, ParserError<'a>> {
         let name_token = self
             .consume(TokenType::Identifier(Identifier { name: "" }))?
             .to_token_sub_type(&Identifier { name: "" })
@@ -95,7 +95,7 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::Semicolon)?;
 
-        Ok(Decl::Var {
+        Ok(Stmt::Var {
             name: name_token,
             initializer,
         })

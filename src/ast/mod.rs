@@ -5,29 +5,25 @@ use crate::scanner::token::{BinaryOperator, Identifier, Literal, UnaryOperator};
 
 pub mod ast_printer;
 
-/// A Declaration in the AST.
-pub enum Decl<'a> {
-    /// A variable declaration. Is preceded by 'var' and followed by a semicolon ';
-    Var {
-        name: Token<Identifier<'a>>,
-        initializer: Expression<'a>,
-    },
-    Statement(Stmt<'a>),
-}
-
 /// A statement in the AST.
 pub enum Stmt<'a> {
     /// An expression statement. Is followed by a semicolon ';'.
     Expression(Expression<'a>),
     /// A print statement. Is preceded by 'print' and followed by a semicolon ';'.
     Print(Expression<'a>),
+    /// A variable declaration statement. Is preceded by 'var' and followed by a semicolon ';
+    Var {
+        name: Token<Identifier<'a>>,
+        initializer: Expression<'a>,
+    },
 }
 
 impl<'a> Stmt<'a> {
-    pub fn accept<V: StmtVisitor<'a>>(&self, visitor: &V) -> Result<V::Output, V::ErrorType> {
+    pub fn accept<V: StmtVisitor<'a>>(&self, visitor: &mut V) -> Result<V::Output, V::ErrorType> {
         match self {
             Stmt::Expression(_) => visitor.visit_expression_stmt(self),
             Stmt::Print(_) => visitor.visit_print_stmt(self),
+            Stmt::Var { .. } => visitor.visit_var_stmt(self),
         }
     }
 }
@@ -60,6 +56,7 @@ impl<'a> Expression<'a> {
             Expression::Grouping(_) => visitor.visit_grouping(self),
             Expression::Unary { .. } => visitor.visit_unary(self),
             Expression::Binary { .. } => visitor.visit_binary(self),
+            Expression::Identifier(_) => todo!(),
         }
     }
 }
@@ -70,6 +67,7 @@ pub trait StmtVisitor<'a> {
 
     fn visit_expression_stmt(&self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType>;
     fn visit_print_stmt(&self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType>;
+    fn visit_var_stmt(&mut self, stmt: &Stmt<'a>) -> Result<Self::Output, Self::ErrorType>;
 }
 
 pub trait ExprVisitor<'a> {

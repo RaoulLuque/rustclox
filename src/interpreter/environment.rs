@@ -2,22 +2,22 @@ use std::collections::HashMap;
 
 use crate::interpreter::{LoxObject, RuntimeError};
 
-struct Environment {
+pub struct Environment {
     variables: HashMap<String, LoxObject>,
 }
 
 impl Environment {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Environment {
             variables: HashMap::new(),
         }
     }
 
-    fn define(&mut self, name: String, value: LoxObject) {
-        self.variables.insert(name, value);
+    pub fn define(&mut self, name: &str, value: LoxObject) {
+        self.variables.insert(name.to_string(), value);
     }
 
-    fn get(&self, name: &str) -> Result<&LoxObject, RuntimeError> {
+    pub fn get(&self, name: &str) -> Result<&LoxObject, RuntimeError<'_>> {
         self.variables
             .get(name)
             .ok_or_else(|| RuntimeError::UndefinedVariable(name.to_string()))
